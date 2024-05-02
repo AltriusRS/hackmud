@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"moduleResolution": "Node",
+		"resolveJsonModule": true,
+		"noEmit": true,
+		"checkJs": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"target": "ESNext",
+		"skipLibCheck": true,
+		"lib": [ "ES2022" ],
+		"types": [ "hackmud-script-manager/env" ]
+	}
+}
