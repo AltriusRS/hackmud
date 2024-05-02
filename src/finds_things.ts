@@ -165,5 +165,5 @@ export default (context: Context, args: { level?: string, /*sector?: string, tar
 		l.log(`\t\`4once the transaction is completed\``)
 	}
 
-	return { ok: true, msg: l.l.get_log().join("\n") }
+	return { ok: true, msg: l.get_log().join("\n").replaceAll('"', '') }
 }
