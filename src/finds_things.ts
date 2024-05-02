@@ -8,7 +8,6 @@ export default (context: Context, args: { level?: string, sector?: string, targe
 				"`4The free finder of things.`",
 				"`4To get started, use the arguments to find sectors of a chosen``Nlevel`",
 				"`4Or if you wish to verify the source code of this script. You may find it at https:\/\/github\.com\/altriusrs\/hackmud\/`"
-
 			].join("\n")
 		}
 	}
