@@ -4,7 +4,7 @@
  * CAUTION: EARLY ACCESS
  * LEVEL: MIDSEC
  */
-export default (context: Context, args: { 
+export default (context: Context, args: {
     donate?: string | number, // The amount to donate to the cause
     source?: boolean          // Whether to show the source code of the donation script
 }) => {
@@ -51,7 +51,7 @@ export default (context: Context, args: {
             let dono_res = $ms.accts.xfer_gc_to({
                 to: "fatalcenturion",
                 amount: final,
-                memo: "Donation to the writer through ${caller}"
+                memo: `Donation to the writer from ${caller}`
             })
             if (!dono_res.ok) {
                 l.log(``)
@@ -63,9 +63,9 @@ export default (context: Context, args: {
 
 
             let tax_res = $ms.accts.xfer_gc_to({
-                to: DONATION_TARGET, 
+                to: DONATION_TARGET,
                 amount: tax,
-                memo: `Donation to ${DONATION_TARGET} Through ${caller}`
+                memo: `Donation to ${DONATION_TARGET} from ${caller}`
             })
 
             if (!tax_res.ok) {
