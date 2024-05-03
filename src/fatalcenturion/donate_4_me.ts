@@ -8,11 +8,23 @@ export default (context: Context, args: {
     donate?: string | number, // The amount to donate to the cause
     source?: boolean          // Whether to show the source code of the donation script
     is_script?: boolean       // Whether the script is being called from another script
+    tax_rate?: number         // The tax rate to apply to the donation (default: 5%, max: 100%, min: 0%)
+    tax_target?: string       // The target to send the tax to (default: wizMUD)
 }) => {
     // If the user wants to see the source...
     if (args.source) return $fs.scripts.quine();
+
+    // verify the tax rate is valid
+    if (!args.tax_rate) args.tax_rate = 5
+    if (args.tax_rate > 100) args.tax_rate = 100
+    if (args.tax_rate < 0) args.tax_rate = 0
+
+    // verify the tax target is valid
+    if (!args.tax_target) args.tax_target = "wizmud"
+
+    // set the context info
     const caller = context.calling_script;
-    const DONATION_TARGET = "fatalcenturion";
+
     // Preload the stdlib
     const l = $fs.scripts.lib()
     // if the user wishes to donate, this is where we process that information
@@ -46,7 +58,7 @@ export default (context: Context, args: {
             l.log(`\t\`4We apologise for any inconvenience caused.\``)
         } else {
             // calculate a value to send to the donation cause based on a percentage
-            let tax = Math.abs(donation * 0.05); // 5% tax
+            let tax = Math.abs(donation * (args.tax_rate / 100)); // 5% tax
             let final = donation - tax; // donation minus tax
 
             let dono_res = $ms.accts.xfer_gc_to({
@@ -63,9 +75,9 @@ export default (context: Context, args: {
                 return { ok: true, msg: l.get_log().join("\n") }
             } else {
                 let tax_res = $ms.accts.xfer_gc_to({
-                    to: DONATION_TARGET,
+                    to: args.tax_target,
                     amount: tax,
-                    memo: `Donation to ${DONATION_TARGET}`,
+                    memo: `Donation to ${args.tax_target}`,
                 }) as any
 
                 if (!tax_res.ok) {
@@ -79,10 +91,14 @@ export default (context: Context, args: {
                     })
                     return { ok: true, msg: l.get_log().join("\n") }
                 } else {
+                    let longest = Math.max("fatalcenturion".length, args.tax_target.length);
+                    let author_str = l.to_gc_str(final);
+                    let tax_str = l.to_gc_str(tax);
+                    let longest_amount = Math.max(author_str.length, tax_str.length);
                     l.log(``)
                     l.log(`\`2Donation Successful\``)
-                    l.log(`\`8- To creator: ${l.to_gc_str(final)}\``)
-                    l.log(`\`8- To wizMUD:  ${l.to_gc_str(tax)} (5%)\``)
+                    l.log(`\`8- To ${pad("fatalcenturion", longest)}: ${pad(author_str, longest_amount)}\``)
+                    l.log(`\`8- To ${pad(args.tax_target, longest)}: ${pad(tax_str, longest_amount)} (${args.tax_rate}%)\``)
                     l.log(`\`2Thank you for your donation!\``)
                 }
             }
@@ -100,4 +116,10 @@ export default (context: Context, args: {
     }
     if (args.is_script) return { ok: true, msg: l.get_log() }
     return { ok: true, msg: l.get_log().join("\n").replaceAll('"', '') }
+}
+
+function pad(str: string, length: number): string {
+    let pad = "";
+    for (let i = 0; i < length - str.length; i++) pad += " ";
+    return pad + str;
 }
