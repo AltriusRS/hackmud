@@ -8,7 +8,7 @@ export default (context: Context, args: { donate?: string | number, source?: boo
     // If the user wants to see the source...
     if (args.source) return $fs.scripts.quine();
     const caller = context.calling_script;
-
+    const DONATION_TARGET = "fatalcenturion";
     // Preload the stdlib
     const l = $fs.scripts.lib()
     // if the user wishes to donate, this is where we process that information
@@ -48,7 +48,7 @@ export default (context: Context, args: { donate?: string | number, source?: boo
             let dono_res = $ns.accts.xfer_gc_to({
                 to: "fatalcenturion",
                 amount: final,
-                memo: "Donation Through altrius.finds_things, the free finder"
+                memo: "Donation to the writer through ${caller}"
             })
             if (!dono_res.ok) {
                 l.log(``)
@@ -60,10 +60,9 @@ export default (context: Context, args: { donate?: string | number, source?: boo
 
 
             let tax_res = $ms.accts.xfer_gc_to({
-                to: "fatalcenturion", // for testing
-                //to: "wiz", // send GC to the correct wizmud trustee
+                to: DONATION_TARGET, 
                 amount: tax,
-                memo: "Donation Through altrius.finds_things, the free finder"
+                memo: `Donation to ${DONATION_TARGET} Through ${caller}`
             })
 
             if (!tax_res.ok) {
@@ -85,12 +84,12 @@ export default (context: Context, args: { donate?: string | number, source?: boo
     } else {
         l.log(``)
         l.log(`\`6Want to support my work? Feeling generous?\``)
-        l.log(`\`6Use ${context.calling_script} {donate:<amount>} to thank me!\``)
+        l.log(`\`6Use ${caller} {donate:<amount>} to thank me!\``)
         l.log(`\`4A percentage of every donation is forwarded to wizMUD\``)
         l.log(`\`4You will receive a statement detailing your donation\``)
         l.log(`\`4once the transaction is completed\``)
         l.log(`\`ECAUTION: Donations are handled by a MIDSEC script, called internally\``)
-        l.log(`\`EYou may view the source code of this script by passing the argument {donationSource: true}\``)
+        l.log(`\`EYou may view the source code of this script by passing the argument  ${caller} {donationSource: true}\``)
         l.log(`\`EIt can also be viewed at \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/fatalcenturion\/donate_4_me.ts\``)
     }
 
