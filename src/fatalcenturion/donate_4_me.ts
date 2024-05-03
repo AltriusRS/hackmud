@@ -4,7 +4,10 @@
  * CAUTION: EARLY ACCESS
  * LEVEL: MIDSEC
  */
-export default (context: Context, args: { donate?: string | number, source?: boolean }) => {
+export default (context: Context, args: { 
+    donate?: string | number, // The amount to donate to the cause
+    source?: boolean          // Whether to show the source code of the donation script
+}) => {
     // If the user wants to see the source...
     if (args.source) return $fs.scripts.quine();
     const caller = context.calling_script;
@@ -45,7 +48,7 @@ export default (context: Context, args: { donate?: string | number, source?: boo
             let tax = Math.round((100 / donation) * 5);
             let final = donation - tax;
 
-            let dono_res = $ns.accts.xfer_gc_to({
+            let dono_res = $ms.accts.xfer_gc_to({
                 to: "fatalcenturion",
                 amount: final,
                 memo: "Donation to the writer through ${caller}"
