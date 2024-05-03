@@ -107,10 +107,16 @@ export default (context: Context, args: {
 	if (args.donateSource) return $fs.fatalcenturion.donate_4_me({ donate: 0, source: true, is_script: true });
 
 	// if the donate argument is present, process...
-	let dono = $fs.fatalcenturion.donate_4_me({ donate: args.donate, source: args.donateSource, is_script: true });
+	let dono = $fs.fatalcenturion.donate_4_me({
+		donate: args.donate,       // The amount to donate to the cause
+		source: false,             // If this is being called from another script, the source code is not needed
+		is_script: true,           // This is a script, so we need to pass this argument
+		tax_rate: 5,               // 5% tax
+		tax_target: "wiz"          // The account to send the tax amount to
+	});
 
 	// Merge the donation output with the finds_things output
-	if (dono.ok) l.log(dono.msg)
+	if (dono.ok) dono.msg.map((m) => l.log(m))
 
-	return { ok: true, msg: l.get_log().join("\n").replaceAll('"', '') }
+	return { ok: true, msg: l.get_log().join("\n").replaceAll("\\", "").replaceAll('"', '') }
 }
