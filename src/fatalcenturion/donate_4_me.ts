@@ -51,7 +51,7 @@ export default (context: Context, args: {
             let dono_res = $ms.accts.xfer_gc_to({
                 to: "fatalcenturion",
                 amount: final,
-                memo: `Donation to the writer from ${caller}`
+                memo: `Donation to the author`
             }) as any
             if (!dono_res.ok) {
                 l.log(``)
@@ -66,7 +66,7 @@ export default (context: Context, args: {
             let tax_res = $ms.accts.xfer_gc_to({
                 to: DONATION_TARGET,
                 amount: tax,
-                memo: `Donation to ${DONATION_TARGET} from ${caller}`
+                memo: `Donation to ${DONATION_TARGET}`,
             }) as any
 
             if (!tax_res.ok) {

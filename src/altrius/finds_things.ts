@@ -36,9 +36,7 @@ export default (context: Context, args: {
 	}
 
 	// if the arguments object is empty, print the source code
-	if (Object.keys(args).length === 0) {
-		return $ms.scripts.quine()
-	}
+	if (Object.keys(args).length === 0) return $ms.scripts.quine()
 
 	// get the names of all security levels
 	const s = l.security_level_names;
