@@ -2,7 +2,7 @@
  * @author altrius
  * @description A utility script designed to locate things for people
  * CAUTION: EARLY ACCESS
- * LEVEL: FULLSEC -> MIDSEC WITH DONATIONS
+ * LEVEL: MIDSEC DUE TO DONATIONS - ACTUALLY FULLSEC
  */
 export default (context: Context, args: {
 	level?: string,           // The level to search for
@@ -13,26 +13,32 @@ export default (context: Context, args: {
 	donate?: string | number, // The amount to donate to the cauase
 	donateSource?: boolean    // Whether to show the user the source code of the donation script
 }) => {
+
+	// Preload the stdlib
+	const l = $fs.scripts.lib()
+
+	l.log("`9     _______           __    ``3   ________    _                  `")
+	l.log("`9    / ____(_)___  ____/ /____``3  /_  __/ /_  (_)___  ____  _____ `")
+	l.log("`9   / /_  / / __  \/ __  / ___/``3   / / / __  \/ / __  \/ __  / ___/ `")
+	l.log("`9  / __/ / / / / / /_/ (__  ) ``3  / / / / / / / / / / /_/ (__  )  `")
+	l.log("`9 /_/   /_/_/ /_/ \__,_/____/  ``3 /_/ /_/ /_/_/_/ /_/ \__, /____/   `")
+	l.log("`9                             ``3                  /____/          `")
+
 	// If no arguments are provided, print a help message
 	if (!args) {
-		return {
-			ok: true, msg: [
-				"`4Meet altrius.finds_things`",
-				"`4The free finder of things.`",
-				"`4To get started, use the arguments to find sectors of a chosen security ``Nlevel`",
-				"`4Or if you wish to verify the source code of this script. You may find it at https:\/\/github\.com\/altriusrs\/hackmud\/`",
-				"`4The source code for this script is obfuscated on here, but can be accessed using altrius.finds_things {}`"
-			].join("\n")
-		}
+		l.log(`\`4Meet ${context.this_script}\``)
+		l.log("`4The free finder of things.`")
+		l.log("`4To get started, use the arguments to find sectors of a chosen security ``Nlevel`")
+		l.log("`4Or if you wish to verify the source code of this script. You may find it at `")
+		l.log("`3https:\/\/github\.com/altriusrs/hackmud/`")
+		l.log(`\`4The source code for this script is obfuscated on here, but can be accessed using  ${context.this_script} {}\``)
+		return { ok: true, msg: l.get_log().join("\n").replaceAll('"', '') }
 	}
 
 	// if the arguments object is empty, print the source code
 	if (Object.keys(args).length === 0) {
-		return $fs.scripts.quine()
+		return $ms.scripts.quine()
 	}
-
-	// Preload the stdlib
-	const l = $fs.scripts.lib()
 
 	// get the names of all security levels
 	const s = l.security_level_names;
@@ -100,13 +106,13 @@ export default (context: Context, args: {
 	 */
 
 	// if the donationSource argument is present, process...
-	if (args.donateSource) return $fs.fatalcenturion.donate_4_me({ donate: 0, source: true });
+	// if (args.donateSource) return $fs.fatalcenturion.donate_4_me({ donate: 0, source: true });
 
 	// if the donate argument is present, process...
-	let dono = $fs.fatalcenturion.donate_4_me({ donate: args.donate, source: args.donateSource });
+	// let dono = $fs.fatalcenturion.donate_4_me({ donate: args.donate, source: args.donateSource });
 
 	// Merge the donation output with the finds_things output
-	if (dono.ok) l.log(dono.msg)
+	// if (dono.ok) l.log(dono.msg)
 
 	return { ok: true, msg: l.get_log().join("\n").replaceAll('"', '') }
 }
