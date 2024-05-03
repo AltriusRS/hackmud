@@ -104,10 +104,10 @@ export default (context: Context, args: {
 	 */
 
 	// if the donationSource argument is present, process...
-	if (args.donateSource) return $fs.fatalcenturion.donate_4_me({ donate: 0, source: true });
+	if (args.donateSource) return $fs.fatalcenturion.donate_4_me({ donate: 0, source: true, is_script: true });
 
 	// if the donate argument is present, process...
-	let dono = $fs.fatalcenturion.donate_4_me({ donate: args.donate, source: args.donateSource });
+	let dono = $fs.fatalcenturion.donate_4_me({ donate: args.donate, source: args.donateSource, is_script: true });
 
 	// Merge the donation output with the finds_things output
 	if (dono.ok) l.log(dono.msg)

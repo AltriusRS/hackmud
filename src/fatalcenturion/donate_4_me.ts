@@ -7,6 +7,7 @@
 export default (context: Context, args: {
     donate?: string | number, // The amount to donate to the cause
     source?: boolean          // Whether to show the source code of the donation script
+    is_script?: boolean       // Whether the script is being called from another script
 }) => {
     // If the user wants to see the source...
     if (args.source) return $fs.scripts.quine();
@@ -60,31 +61,31 @@ export default (context: Context, args: {
                 l.log(`\`4We apologise for any inconvenience caused.\``)
                 l.log(`\`9${dono_res.msg}\` | Tried to send ${final} GC`)
                 return { ok: true, msg: l.get_log().join("\n") }
+            } else {
+                let tax_res = $ms.accts.xfer_gc_to({
+                    to: DONATION_TARGET,
+                    amount: tax,
+                    memo: `Donation to ${DONATION_TARGET}`,
+                }) as any
+
+                if (!tax_res.ok) {
+                    l.log(`\`DDonation Failed - Unknown Error\``)
+                    l.log(`\`8We're not sure what happened, we have fully refunded any GC taken from your account.\``)
+                    l.log(`\`4We apologise for any inconvenience caused.\``)
+                    l.log(`\`9${tax_res.msg}\` | Tried to send ${tax} GC`)
+                    $fs.accts.xfer_gc_to_caller({
+                        amount: final,
+                        memo: "Your donation was refunded due to a discrepancy."
+                    })
+                    return { ok: true, msg: l.get_log().join("\n") }
+                } else {
+                    l.log(``)
+                    l.log(`\`2Donation Successful\``)
+                    l.log(`\`8- To creator: ${l.to_gc_str(final)}\``)
+                    l.log(`\`8- To wizMUD:  ${l.to_gc_str(tax)} (5%)\``)
+                    l.log(`\`2Thank you for your donation!\``)
+                }
             }
-
-
-            let tax_res = $ms.accts.xfer_gc_to({
-                to: DONATION_TARGET,
-                amount: tax,
-                memo: `Donation to ${DONATION_TARGET}`,
-            }) as any
-
-            if (!tax_res.ok) {
-                l.log(`\`DDonation Failed - Unknown Error\``)
-                l.log(`\`8We're not sure what happened, we have fully refunded any GC taken from your account.\``)
-                l.log(`\`4We apologise for any inconvenience caused.\``)
-                l.log(`\`9${tax_res.msg}\` | Tried to send ${tax} GC`)
-                $fs.accts.xfer_gc_to_caller({
-                    amount: final,
-                    memo: "Your donation was refunded due to a discrepancy."
-                })
-                return { ok: true, msg: l.get_log().join("\n") }
-            }
-            l.log(``)
-            l.log(`\`2Donation Successful\``)
-            l.log(`\`8- To creator: ${l.to_gc_str(final)}\``)
-            l.log(`\`8- To wizMUD:  ${l.to_gc_str(tax)} (5%)\``)
-            l.log(`\`2Thank you for your donation!\``)
         }
     } else {
         l.log(``)
@@ -97,6 +98,6 @@ export default (context: Context, args: {
         l.log(`\`EYou may view the source code of this script by passing the argument  ${caller} {donationSource: true}\``)
         l.log(`\`EIt can also be viewed at \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/fatalcenturion\/donate_4_me.ts\``)
     }
-
+    if (args.is_script) return { ok: true, msg: l.get_log() }
     return { ok: true, msg: l.get_log().join("\n").replaceAll('"', '') }
 }
