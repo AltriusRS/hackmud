@@ -45,19 +45,20 @@ export default (context: Context, args: {
             l.log(`\t\`4We apologise for any inconvenience caused.\``)
         } else {
             // calculate a value to send to the donation cause based on a percentage
-            let tax = Math.round((donation / 5) * 100);
-            let final = donation - tax;
+            let tax = Math.abs(donation * 0.05); // 5% tax
+            let final = donation - tax; // donation minus tax
 
             let dono_res = $ms.accts.xfer_gc_to({
                 to: "fatalcenturion",
                 amount: final,
                 memo: `Donation to the writer from ${caller}`
-            })
+            }) as any
             if (!dono_res.ok) {
                 l.log(``)
                 l.log(`\`DDonation Failed - Unknown Error\``)
                 l.log(`\`8We're not sure what happened, no GC was taken from your account\``)
                 l.log(`\`4We apologise for any inconvenience caused.\``)
+                l.log(`\`9${dono_res.msg}\` | Tried to send ${final} GC`)
                 return { ok: true, msg: l.get_log().join("\n") }
             }
 
@@ -66,12 +67,13 @@ export default (context: Context, args: {
                 to: DONATION_TARGET,
                 amount: tax,
                 memo: `Donation to ${DONATION_TARGET} from ${caller}`
-            })
+            }) as any
 
             if (!tax_res.ok) {
                 l.log(`\`DDonation Failed - Unknown Error\``)
                 l.log(`\`8We're not sure what happened, we have fully refunded any GC taken from your account.\``)
                 l.log(`\`4We apologise for any inconvenience caused.\``)
+                l.log(`\`9${tax_res.msg}\` | Tried to send ${tax} GC`)
                 $fs.accts.xfer_gc_to_caller({
                     amount: final,
                     memo: "Your donation was refunded due to a discrepancy."
