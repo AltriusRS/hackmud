@@ -45,7 +45,7 @@ export default (context: Context, args: {
             l.log(`\t\`4We apologise for any inconvenience caused.\``)
         } else {
             // calculate a value to send to the donation cause based on a percentage
-            let tax = Math.round((100 / donation) * 5);
+            let tax = Math.round((donation / 5) * 100);
             let final = donation - tax;
 
             let dono_res = $ms.accts.xfer_gc_to({
