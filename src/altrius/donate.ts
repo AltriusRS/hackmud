@@ -65,5 +65,5 @@ export default (context: Context, args: {
         l.log("`4You may also pass a GC string to the argument, for example, { donate:\"100GC\" }`")
     };
 
-    return { ok: true, msg: l.get_log().map((e) => "  " + e).join("\n").replaceAll("\\", "").replaceAll('"', '') }
+    return l.get_log().map((e) => "  " + e).join("\n").replaceAll("\\", "").replaceAll('"', '')
 }
