@@ -1,8 +1,8 @@
 /**
  * @author altrius
  * @description A utility script to automate and standardise the handling of donations
- * CAUTION: EARLY ACCESS
- * LEVEL: MIDSEC
+ * @caution EARLY ACCESS
+ * @level MIDSEC
  */
 export default (context: Context, args: {
     donate?: string | number, // The amount to donate to the cause
