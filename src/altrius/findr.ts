@@ -27,8 +27,23 @@ export default (context: Context, args: {
 	l.log("`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.1.0 `");
 	l.log("`8                       ‾‾‾‾‾‾‾‾    ‾‾‾‾‾‾‾‾‾‾‾`")
 
+	let fields = ["ignoreEmpty", "level", "sector", "publics", "prefix", "postfix", "regex"]
+
+	let is_valid = !!args // if the is no argument object, it is invalid
+
+	let filters = Object.keys(args)
+	let invalids = filters.filter((e) => !fields.includes(e))
+	if (invalids.length > 0) {
+		for (let i = 0; i < invalids.length; i++) {
+			l.log(`\`DInvalid argument: ${invalids[i]}\``)
+		}
+		is_valid = false
+	}
+
+
 	// If no arguments are provided, print a help message
-	if (!args) {
+	if (!is_valid) {
+		l.log("")
 		l.log(`Meet ${context.this_script}`)
 		l.log("The free finder of things.")
 		l.log("To get started, use the arguments below to find scripts you might be interested in")
@@ -56,17 +71,6 @@ export default (context: Context, args: {
 
 	// if the arguments object is empty, print the source code
 	if (Object.keys(args).length === 0) return $fs.scripts.quine()
-
-	let fields = ["ignoreEmpty", "level", "sector", "publics", "prefix", "postfix", "regex"]
-
-	let filters = Object.keys(args)
-	let invalids = filters.filter((e) => !fields.includes(e))
-	if (invalids.length > 0) {
-		for (let i = 0; i < invalids.length; i++) {
-			l.log(`\`DInvalid argument: ${invalids[i]}\``)
-		}
-		return l.get_log().map((e) => "  " + e).join("\n").replaceAll("\\", "").replaceAll('"', '')
-	}
 
 	if (args) {
 
