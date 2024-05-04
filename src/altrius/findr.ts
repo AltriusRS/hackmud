@@ -32,16 +32,17 @@ export default (context: Context, args: {
 		l.log(`Meet ${context.this_script}`)
 		l.log("The free finder of things.")
 		l.log("To get started, use the arguments below to find scripts you might be interested in")
-		l.log("- `2level`    - The security level to search within")
-		l.log("- `2sector`   - The sector to search within")
-		l.log("- `2publics`  - Whether to show only scripts ending in `2.public`")
-		l.log("- `2prefix`   - The prefix to search for")
-		l.log("           > For example, to find all scripts starting in `2wiz.`, use the argument `2wiz.`")
-		l.log("- `2postfix`  - The postfix to search for")
-		l.log("           > For example, to find all scripts ending in `2.bank`, use the argument `2.bank`")
-		l.log("- `2regex`    - A regular expression to search for")
-		l.log("           > play around with the regex tester at https:\/\/regex101.com\/")
-		l.log("           > For example, to find all scripts containing a number use the argument `2[0-9]`")
+		l.log("- `2ignoreEmpty` - Ignores empty results")
+		l.log("- `2level`       - The security level to search within")
+		l.log("- `2sector`      - The sector to search within")
+		l.log("- `2publics`     - Whether to show only scripts ending in `2.public`")
+		l.log("- `2prefix`      - The prefix to search for")
+		l.log("              > For example, to find all scripts starting in `2wiz.`, use the argument `2wiz.`")
+		l.log("- `2postfix`     - The postfix to search for")
+		l.log("              > For example, to find all scripts ending in `2.bank`, use the argument `2.bank`")
+		l.log("- `2regex`       - A regular expression to search for")
+		l.log("              > play around with the regex tester at https:\/\/regex101.com\/")
+		l.log("              > For example, to find all scripts containing a number use the argument `2[0-9]`")
 		l.log("")
 		l.log("`3ORDER OF EXECUTION:`")
 		l.log("`3- The order of execution is as listed above`")
@@ -50,20 +51,26 @@ export default (context: Context, args: {
 		l.log("Or if you wish to verify the source code of this script. You may find it at ")
 		l.log("https:\/\/github\.com/altriusrs/hackmud/")
 		l.log(`The source code for this script is obfuscated on here, but can be accessed using  ${context.this_script} {}`)
-		return { ok: true, msg: l.get_log().join("\n").replaceAll('"', '') }
+		return l.get_log().join("\n").replaceAll('"', '')
 	}
 
 	// if the arguments object is empty, print the source code
 	if (Object.keys(args).length === 0) return $fs.scripts.quine()
 
-	// get the names of all security levels
-	const s = l.security_level_names;
+	let fields = ["ignoreEmpty", "level", "sector", "publics", "prefix", "postfix", "regex"]
 
-	// 	// Send the output to the chat
-	// 	$fs.chats.send({ channel: "altri_testing", msg: `\nI just found \`5${sector_list.length}\` sectors using altrius.finds_things` })
-	// 	// } else 
+	let filters = Object.keys(args)
+	let invalids = filters.filter((e) => !fields.includes(e))
+	if (invalids.length > 0) {
+		for (let i = 0; i < invalids.length; i++) {
+			l.log(`\`DInvalid argument: ${invalids[i]}\``)
+		}
+		return l.get_log().map((e) => "  " + e).join("\n").replaceAll("\\", "").replaceAll('"', '')
+	}
 
 	if (args) {
+
+
 		// Query the db for the sector
 		let response = JSON.parse($fs.fatalcenturion.db({ operand: "f", command: JSON.stringify({}), query: JSON.stringify({ sector: args.sector, level: args.level }) }));
 
@@ -119,5 +126,5 @@ export default (context: Context, args: {
 	l.log(`\`EThe donation script internally calls a library which I wrote, both can be located at the links below\``)
 	l.log(`\`EDonations: \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/altrius\/donate.ts\``)
 	l.log(`\`ELibrary: \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/fatalcenturion\/donate_4_me.ts\``)
-	return { ok: true, msg: l.get_log().map((e) => "  " + e).join("\n").replaceAll("\\", "").replaceAll('"', '') }
+	return l.get_log().map((e) => "  " + e).join("\n").replaceAll("\\", "").replaceAll('"', '')
 }
