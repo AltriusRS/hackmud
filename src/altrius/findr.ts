@@ -25,20 +25,18 @@ export default (context: Context, args: {
 	l.log("`p#+#            #+#     #+#   #+#+# #+#    #+# #+#    #+# `");
 	l.log("`3###        ########### ###    #### #########  ###    ### `");
 	l.log("`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.1.0 `");
-	l.log("`8                       ‾‾‾‾‾‾‾‾    ‾‾‾‾‾‾‾‾‾‾‾`")
+	l.log("`8                       ‾‾‾‾‾‾‾‾    ‾‾‾‾‾‾‾‾‾‾‾`");
 
-	let fields = ["ignoreEmpty", "level", "sector", "publics", "prefix", "postfix", "regex"]
+	let is_valid = true
 
-	let is_valid = !!args // if the is no argument object, it is invalid
-
-	let filters = Object.keys(args)
-	let invalids = filters.filter((e) => !fields.includes(e))
-	if (invalids.length > 0) {
-		for (let i = 0; i < invalids.length; i++) {
-			l.log(`\`DInvalid argument: ${invalids[i]}\``)
+	if (args) {
+		let filters = Object.keys(args)
+		let invalids = filters.filter((e) => !["ignoreEmpty", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
+		if (invalids.length > 0) {
+			invalids.map((e) => l.log(`\`DInvalid argument: ${e}\``))
+			is_valid = false
 		}
-		is_valid = false
-	}
+	} else is_valid = false
 
 
 	// If no arguments are provided, print a help message
@@ -72,48 +70,51 @@ export default (context: Context, args: {
 	// if the arguments object is empty, print the source code
 	if (Object.keys(args).length === 0) return $fs.scripts.quine()
 
-	if (args) {
+	// Query the db for the sector
+	let response = JSON.parse($fs.fatalcenturion.db({ operand: "f", command: JSON.stringify({}), query: JSON.stringify({ sector: args.sector, level: args.level }) }));
+
+	for (let i = 0; i < response.length; i++) {
+		let sector = response[i];
+
+		if (!sector.scripts || sector.scripts.length === 0) sector.scripts = ["No Scripts Cached"]
+
+		sector.scripts = sector.scripts.filter((e: string) => {
+			if (args.publics && !e.endsWith(".public")) return false;
+			if (args.prefix && !e.startsWith(args.prefix)) return false;
+			if (args.postfix && !e.endsWith(args.postfix)) return false;
+			if (args.regex && !e.match(new RegExp(args.regex))) return false;
+			return true;
+		})
 
 
-		// Query the db for the sector
-		let response = JSON.parse($fs.fatalcenturion.db({ operand: "f", command: JSON.stringify({}), query: JSON.stringify({ sector: args.sector, level: args.level }) }));
-
-		for (let i = 0; i < response.length; i++) {
-			let sector = response[i];
-
-			if (!sector.scripts || sector.scripts.length === 0) sector.scripts = ["No Scripts Cached"]
-
-			if (args.publics) sector.scripts = sector.scripts.filter((e: string) => e.endsWith(".public"))
-			if (args.prefix) sector.scripts = sector.scripts.filter((e: string) => e.startsWith(args.prefix))
-			if (args.postfix) sector.scripts = sector.scripts.filter((e: string) => e.endsWith(args.postfix))
-			if (args.regex) sector.scripts = sector.scripts.filter((e: string) => e.match(new RegExp(args.regex)))
-			if (sector.scripts.length === 0) sector.scripts.push("No Scripts Cached")
-			if (args.ignoreEmpty && sector.scripts[0] === "No Scripts Cached") continue
-			l.log(``)
-			l.log(`\`4Query results for sector\` ${sector.sector}`)
-			switch (sector.level.toLowerCase()) {
-				case "fullsec":
-					l.log(`\`2FULLSEC:\``);
-					break;
-				case "highsec":
-					l.log(`\`HHIGHSEC:\``);
-					break;
-				case "midsec":
-					l.log(`\`5MIDSEC:\``);
-					break;
-				case "lowsec":
-					l.log(`\`DLOWSEC:\``);
-					break;
-				case "nullsec":
-					l.log(`\`VNULLSEC:\``);
-					break;
-			}
-
-			sector.scripts.map((e) => l.log(`\`4- ${e}\``));
+		if (sector.scripts.length === 0) {
+			if (args.ignoreEmpty) continue;
+			else sector.scripts.push("No Scripts Cached")
 		}
+
+
+		l.log(``)
+		l.log(`\`4Query results for sector\` ${sector.sector} - Last Scanned ${get_hhmmss(new Date().getTime() - new Date(sector.z).getTime())} ago`)
+		switch (sector.level.toLowerCase()) {
+			case "fullsec":
+				l.log(`\`2FULLSEC:\``);
+				break;
+			case "highsec":
+				l.log(`\`HHIGHSEC:\``);
+				break;
+			case "midsec":
+				l.log(`\`5MIDSEC:\``);
+				break;
+			case "lowsec":
+				l.log(`\`DLOWSEC:\``);
+				break;
+			case "nullsec":
+				l.log(`\`VNULLSEC:\``);
+				break;
+		}
+
+		sector.scripts.map((e) => l.log(`\`4- ${e}\``));
 	}
-
-
 
 
 	/**
@@ -123,12 +124,22 @@ export default (context: Context, args: {
 	l.log(``)
 	l.log(`\`6Want to support my work? Feeling generous?\``)
 	l.log(`\`6Use altrius.donate {donate:<amount>} to thank me!\``)
-	l.log(`A percentage of every donation is forwarded to wizMUD`)
-	l.log(`You will receive a statement detailing your donation`)
-	l.log(`once the transaction is completed`)
-	l.log(`\`ECAUTION: Donations are handled by a MIDSEC script, called internally\``)
-	l.log(`\`EThe donation script internally calls a library which I wrote, both can be located at the links below\``)
-	l.log(`\`EDonations: \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/altrius\/donate.ts\``)
-	l.log(`\`ELibrary: \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/fatalcenturion\/donate_4_me.ts\``)
-	return l.get_log().map((e) => "  " + e).join("\n").replaceAll("\\", "").replaceAll('"', '')
+	// l.log(`A percentage of every donation is forwarded to wizMUD`)
+	// l.log(`You will receive a statement detailing your donation`)
+	// l.log(`once the transaction is completed`)
+	// l.log(`\`ECAUTION: Donations are handled by a MIDSEC script, called internally\``)
+	// l.log(`\`EThe donation script internally calls a library which I wrote, both can be located at the links below\``)
+	// l.log(`\`EDonations: \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/altrius\/donate.ts\``)
+	// l.log(`\`ELibrary: \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/fatalcenturion\/donate_4_me.ts\``)
+	return l.get_log().map((e) => "  " + e).join("\n").replaceAll('"', '')
+}
+
+function get_hhmmss(time: number) {
+	time = time / 1000;
+	let hours = Math.floor(time / 3600);
+	time -= hours * 3600;
+	let minutes = Math.floor(time / 60);
+	time -= minutes * 60;
+	let seconds = Math.floor(time);
+	return `${hours < 10 ? "0" + hours : hours}:${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
 }
