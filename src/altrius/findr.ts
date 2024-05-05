@@ -155,7 +155,7 @@ export default (context: Context, args: {
 
 	let instant = new Date().getTime();
 	// Query the db for the sector
-	let response = (query_db("f", {}, { __script: true, sector: args.sector, level: args.level }) as any[]);
+	let response = (args.name ? query_db("f", {}, { __script: true, ikey: args.name.replaceAll(".", "#") }) : query_db("f", {}, { __script: true, sector: args.sector, level: args.level })) as any[];
 	let sector_count = { filtered: 0, total: 0 };
 	let script_count = { filtered: 0, total: 0 };
 	let sec_count = [];
@@ -174,7 +174,6 @@ export default (context: Context, args: {
 		}
 
 		let filter_pass = true;
-		if (args.name && script.name !== args.name) filter_pass = false;
 		if (args.publics && !script.ikey.endsWith(".public")) filter_pass = false;
 		if (args.prefix && !script.ikey.startsWith(args.prefix)) filter_pass = false;
 		if (args.postfix && !script.ikey.endsWith(args.postfix)) filter_pass = false;
@@ -221,16 +220,16 @@ export default (context: Context, args: {
 		}
 
 		for (let j = 0; j < sector.scripts.length; j++) {
+			let script = sector.scripts[j]
+			let name = script.ikey.replace("#", ".");
+			// join and capitalize the first letter of each word
+			let tag_string = script.tags.length > 0 ? script.tags.map((e) => e.split(" ").map((f) => f.charAt(0).toUpperCase() + f.slice(1)).join(" ")).join(", ") : "No Tags";
+			let report_str = script.reports.length > 0
+				? script.reports.length > 1
+					? `\`E${script.reports.length} scam reports\``
+					: `\`E${script.reports.length} scam report\``
+				: "No Scams Reported";
 			if (args.name) {
-				let script = sector.scripts[j]
-				let name = script.ikey.replace("#", ".");
-				let tag_string = script.tags.length > 0 ? script.tags.join(", ") : "No Tags";
-				let report_str = script.reports.length > 0
-					? script.reports.length > 1
-						? `\`E${script.reports.length} scam reports\``
-						: `\`E${script.reports.length} scam report\``
-					: "No Scams Reported";
-
 				l.log(
 					`Name: ${name}\n`
 					+ `Sector: ${script.sector}\n`
@@ -240,27 +239,17 @@ export default (context: Context, args: {
 					+ `Script last indexed: ${get_hhmmss(new Date().getTime() - script.z)} ago\n`
 					+ `Open source: ${script.source ? "Yes" : "No"}\n`
 					+ `${script.source ? "Source: " + script.source : ""}\n`
-					+ `Author: ${script.name.split(".")[0]}\n`
+					+ `Author: ${name.split(".")[0]}\n`
 				)
 
-				if (context.caller === script.name.split(".")[0]) {
-					l.log(`You are the author of this script\n`
-						+ "If you wish to modify the listing, please contact @altrius_codes on discord\n"
-						+ "Please understand that scam reports will not be modified unless proof of abuse is provided\n"
-						+ "If your script is open source, please send me a link to the code, so I may add it to the database"
+				if (context.caller === name.split(".")[0]) {
+					l.log("`YYou are the author of this script`\n"
+						+ "`7If you wish to modify the listing, please contact @altrius_codes on discord`\n"
+						+ "`7If your script is open source, please send me a link to the code, so I may add it to the database`\n"
+						+ "`7Please understand that scam reports will not be modified unless proof of abuse is provided`"
 					)
 				}
-
 			} else {
-				let script = sector.scripts[j]
-				let name = script.ikey.replace("#", ".");
-				let tag_string = script.tags.length > 0 ? script.tags.join(", ") : "No Tags";
-				let report_str = script.reports.length > 0
-					? script.reports.length > 1
-						? `\`E${script.reports.length} scam reports\``
-						: `\`E${script.reports.length} scam report\``
-					: "No Scams Reported";
-
 				if (script.is_stale)
 					l.log(`\`4${pad(j + 1 + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`\`ISTALE\`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
 				else
@@ -290,7 +279,7 @@ export default (context: Context, args: {
 			`Across ${sector_count.filtered} sectors.\n` +
 			`Did you know that you can report scams now?\n` +
 			`altrius.findr {report: "some.script"}\n` +
-			`altrius.findr, in search of a better MUD`
+			"`YFindr - in search of a better MUD`"
 	})
 	return end()
 }
