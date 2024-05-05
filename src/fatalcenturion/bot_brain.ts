@@ -5,6 +5,7 @@
  */
 export default (context: Context, args: unknown) => {
     const MAX_SECTORS_PER_TRIGGER = 9;
+    $hs.chats.tell({ to: "altrius", msg: "I'm working" });
 
     // let levels: [string, string[]][] = [];
 
@@ -75,5 +76,6 @@ export default (context: Context, args: unknown) => {
         });
     }
 
+    $hs.chats.tell({ to: "altrius", msg: "I'm finished" });
     return { ok: true, msg: "[Bot Brain] complete" };
 }
