@@ -73,13 +73,21 @@ export default (context: Context, args: { mspt: number }) => {
                 break;
         }
         $ms.chats.leave({ channel: sector });
-        $db.u1({ sector }, {
-            $set: {
-                level,
-                scripts,
-                z: new Date().getTime(),
-            },
-        });
+
+        for (let j = 0; j < scripts.length; j++) {
+            let script = scripts[j];
+            $D("Adding script " + script + " to " + sector + " with level " + level);
+            $db.us({ __script: true, ikey: script.replaceAll(".", "#") }, {
+                $set: {
+                    __script: true,
+                    ikey: script.replaceAll(".", "#"),
+                    title: script,
+                    level,
+                    sector,
+                    z: new Date().getTime(),
+                },
+            });
+        }
     }
 
     $hs.chats.tell({ to: "altrius", msg: "I'm finished" });

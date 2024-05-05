@@ -5,8 +5,9 @@
  * @level FULLSEC
  */
 export default (context: Context, args: {
-	tags?: string,			  // The tags to add to the script (comma separated)
-	tag?: string,             // The script to tag
+	tags?: string | string[], // The tags to add to the script (comma separated)
+	tag?: string,   		  // The script to tag
+	name?: string,   		  // The name of the script to search for
 	report?: string,          // Allows someone to report a scam script
 	level?: string,           // The level to search for
 	sector?: string,          // The sector to search for
@@ -15,30 +16,34 @@ export default (context: Context, args: {
 	prefix?: string,          // The prefix to search for
 	postfix?: string,         // The postfix to search for
 	regex?: string,           // A regular expression to search for
-	showEmpty: boolean,       // Whether to show empty results
 	showStale?: boolean,      // Whether to show results which are considered stale (IE: those over 12 hours old)
 	source?: boolean,         // Whether to show the source code of the findr script
 }) => {
-	const end = () => l.get_log().join("\n").replaceAll('"', '')
+	const end = () => {
+		let log = l.get_log().join("\n").replaceAll('"', '')
+		// $D(log)
+		log = log.split("\\n").join("\n");
+		// $D(log)
+		return log
+	}
 	// Preload the stdlib
 	const l = $fs.scripts.lib()
-	const empty_manifest = { reports: [], tags: [] }
 
-	l.log("`5:::::::::: ::::::::::: ::::    ::: :::::::::  :::::::::  `");
-	l.log("`f:+:            :+:     :+:+:   :+: :+:    :+: :+:    :+: `");
-	l.log("`g+:+            +:+     :+:+:+  +:+ +:+    +:+ +:+    +:+ `");
-	l.log("`o:#::+::#       +#+     +#+ +:+ +#+ +#+    +:+ +#++:++#:  `");
-	l.log("`n+#+            +#+     +#+  +#+#+# +#+    +#+ +#+    +#+ `");
-	l.log("`p#+#            #+#     #+#   #+#+# #+#    #+# #+#    #+# `");
-	l.log("`3###        ########### ###    #### #########  ###    ### `");
-	l.log("`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.1.2 `");
-	l.log("`8                       ‾‾‾‾‾‾‾‾    ‾‾‾‾‾‾‾‾‾‾‾`");
+	l.log("`5:::::::::: ::::::::::: ::::    ::: :::::::::  :::::::::  `"
+		+ "\n`f:+:            :+:     :+:+:   :+: :+:    :+: :+:    :+: `"
+		+ "\n`g+:+            +:+     :+:+:+  +:+ +:+    +:+ +:+    +:+ `"
+		+ "\n`o:#::+::#       +#+     +#+ +:+ +#+ +#+    +:+ +#++:++#:  `"
+		+ "\n`n+#+            +#+     +#+  +#+#+# +#+    +#+ +#+    +#+ `"
+		+ "\n`p#+#            #+#     #+#   #+#+# #+#    #+# #+#    #+# `"
+		+ "\n`3###        ########### ###    #### #########  ###    ### `"
+		+ "\n`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.1.3 `"
+		+ "\n`8                       ‾‾‾‾‾‾‾‾    ‾‾‾‾‾‾‾‾‾‾‾`");
 
 	let is_valid = true
 
 	if (args) {
 		let filters = Object.keys(args)
-		let invalids = filters.filter((e) => !["report", "showEmpty", "showStale", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
+		let invalids = filters.filter((e) => !["tag", "tags", "name", "report", "showStale", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
 		if (invalids.length > 0) {
 			invalids.map((e) => l.log(`\`DInvalid argument: ${e}\``))
 			is_valid = false
@@ -47,80 +52,102 @@ export default (context: Context, args: {
 
 	// If no arguments are provided, print a help message
 	if (!is_valid) {
-		l.log("")
-		l.log(`Meet ${context.this_script}`)
-		l.log("The always free script finder!")
-		l.log(`\`DScammed by a script? Report the script to us with the argument\` { report: "<script_name>" }`)
-		l.log("To get started, use the arguments below to find scripts you might be interested in")
-		l.log("- `2showEmpty`   - Shows empty results")
-		l.log("- `2showStale`   - Show results which are considered stale (IE: those over 12 hours old)")
-		l.log("- `2level`       - The security level to search within")
-		l.log("- `2sector`      - The sector to search within")
-		l.log("- `2publics`     - Whether to show only scripts ending in `2.public`")
-		l.log("- `2prefix`      - The prefix to search for")
-		l.log("              > For example, to find all scripts starting in `2wiz.`, use the argument `2wiz.`")
-		l.log("- `2postfix`     - The postfix to search for")
-		l.log("              > For example, to find all scripts ending in `2.bank`, use the argument `2.bank`")
-		l.log("- `2regex`       - A regular expression to search for")
-		l.log("              > play around with the regex tester at https:\/\/regex101.com\/")
-		l.log("              > For example, to find all scripts containing a number use the argument `2[0-9]`")
-		l.log("")
-		l.log("`5ORDER OF EXECUTION:`")
-		l.log("`5- The order of execution is as listed above`")
-		l.log("")
-		l.log("If you wish to verify the source code of this script. You may find it at ")
-		l.log("https:\/\/github\.com/altriusrs/hackmud/")
-		l.log(`The source code for this script is obfuscated on here, but may be accessed using  ${context.this_script} {}`)
+		l.log(""
+			+ `\nMeet ${context.this_script}`
+			+ "\nThe always free script finder!"
+			+ `\n\`DScammed by a script? Report the script to us with the argument\` { report: '<script_name>' }`
+			+ "\nTo get started, use the arguments below to find scripts you might be interested in"
+			+ "\n- `2showStale`   - Show results which are considered stale (IE: those over 12 hours old)"
+			+ "\n- `2name`        - The name of the script to search for"
+			+ "\n- `2level`       - The security level to search within"
+			+ "\n- `2sector`      - The sector to search within"
+			+ "\n- `2tags`        - An array of tags which you want to include in your search"
+			+ "\n- `2publics`     - Whether to show only scripts ending in `2.public`"
+			+ "\n- `2prefix`      - The prefix to search for"
+			+ "\n              > For example, to find all scripts starting in `2wiz.`, use the argument `2wiz.`"
+			+ "\n- `2postfix`     - The postfix to search for"
+			+ "\n              > For example, to find all scripts ending in `2.bank`, use the argument `2.bank`"
+			+ "\n- `2regex`       - A regular expression to search for"
+			+ "\n              > play around with the regex tester at https:\/\/regex101.com\/"
+			+ "\n              > For example, to find all scripts containing a number use the argument `2[0-9]`"
+			+ "\n"
+			+ "\n`5ORDER OF EXECUTION:`"
+			+ "\n`5- The order of execution is as listed above`"
+			+ "\n"
+			+ "\nIf you wish to verify the source code of this script. You may find it at "
+			+ "\nhttps:\/\/github\.com/altriusrs/hackmud/"
+			+ `\nDue to space constraints, this script is obfuscated in game.`)
 		return end()
 	}
 
-	// if the arguments object is empty, print the source code
-	if (Object.keys(args).length === 0) return $fs.scripts.quine()
-
-	if (args.tag) {
+	if (args.tag && context.caller === "altrius") {
 		const ikey = args.tag.replace(".", "#")
-		l.log("Tagging script: " + args.report)
-		let manifest = query_db("f", {}, { _reports: true })[0]
+		let manifest = query_db("f", {}, { ikey })[0]
 
-		if (!manifest[ikey]) manifest[ikey] = empty_manifest
+		let tags = (typeof args.tags === "string") ? args.tags.split(",").map((e) => e.trim()) : args.tags
 
-		manifest[ikey].tags = manifest[ikey].tags.concat(args.tags.split(","))
-
-		query_db("us", {
-			$set: {
-				[ikey]: manifest[ikey],
-			}
-		}, { _reports: true })
-		l.log("Report sent, thank you")
+		l.log("Script tagged, thank you")
+		if (!manifest) {
+			query_db("us", {
+				$set: {
+					__script: true,
+					ikey,
+					level: "unknown",
+					sector: "unknown",
+					tags,
+					reports: [],
+					z: new Date().getTime(),
+				}
+			}, { ikey })
+		} else {
+			query_db("u1", {
+				$set: {
+					tags,
+					z: new Date().getTime(),
+				}
+			}, { ikey })
+		}
 		return end()
 	}
 
 	if (args.report) {
 		const ikey = args.report.replace(".", "#")
 		l.log("Reporting script: " + args.report)
-		let manifest = query_db("f", {}, { _reports: true })[0]
+		let manifest = query_db("f", {}, { ikey })[0]
 
-		if (!manifest[ikey]) manifest[ikey] = empty_manifest
-		// Filter out reports from more than 24 hours ago
-		manifest[ikey].reports = manifest[ikey].reports.filter((e) => e.z > new Date().getTime() - 24 * 60 * 60 * 1000)
+		let report = { victim: context.caller, z: new Date().getTime() }
+		if (!manifest) {
+			query_db("us", {
+				$set: {
+					__script: true,
+					ikey,
+					level: "unknown",
+					sector: "unknown",
+					tags: [],
+					reports: [report],
+					z: new Date().getTime(),
+				}
+			}, { ikey })
+		} else {
+			// // Filter out reports from more than 24 hours ago
+			manifest.reports = manifest.reports.filter((e) => e.z > new Date().getTime() - (4_3200_000 * 2))
 
-		let prevReport = manifest[ikey].reports.find((e) => e.victim === context.caller);
-		let canReport = !prevReport;
-
-		// Check if the user has already reported this script in the last 24 hours
-		if (!canReport) {
-			l.log(`\`DYou have already reported this script in the last 24 hours\``)
-			return l.get_log().join("\n").replaceAll('"', '')
+			let prevReport = manifest.reports.find((e) => e.victim === context.caller);
+			let canReport = !prevReport;
+			// Check if the user has already reported this script in the last 24 hours
+			if (!canReport) {
+				l.log(`\`DYou have already reported this script in the last 24 hours\``)
+				return end()
+			}
+			manifest.reports.push(report)
+			query_db("u1", {
+				$set: {
+					reports: manifest.reports,
+					z: new Date().getTime(),
+				}
+			}, { ikey })
 		}
 
-		manifest.reports.push({ victim: context.caller, z: new Date().getTime() })
-
-		query_db("us", {
-			$set: {
-				_reports: true,
-				[ikey]: manifest[ikey],
-			}
-		}, { _reports: true })
 		l.log("Report sent, thank you")
 		return end()
 	}
@@ -128,39 +155,54 @@ export default (context: Context, args: {
 
 	let instant = new Date().getTime();
 	// Query the db for the sector
-	let response = (query_db("f", {}, { sector: args.sector, level: args.level }) as any[]).filter((e) => e.level && e.sector);
-	let reports = query_db("f", {}, { _reports: true })[0]
+	let response = (query_db("f", {}, { __script: true, sector: args.sector, level: args.level }) as any[]);
 	let sector_count = { filtered: 0, total: 0 };
 	let script_count = { filtered: 0, total: 0 };
+	let sec_count = [];
+	let sectors = {}
+	let longest_script_name = 0
 
+	let stale_time = new Date().getTime() - 4_3200_000;
 	for (let i = 0; i < response.length; i++) {
-		let sector = response[i];
-		sector_count.total++;
-		script_count.total += sector.scripts.length;
+		let script = response[i];
+		let sector = sectors[script.sector];
+		script_count.total++;
 
-		if (!sector.scripts || sector.scripts.length === 0) sector.scripts = ["No Scripts Cached"]
-
-		sector.scripts = sector.scripts.filter((e: string) => {
-			if (args.publics && !e.endsWith(".public")) return false;
-			if (args.prefix && !e.startsWith(args.prefix)) return false;
-			if (args.postfix && !e.endsWith(args.postfix)) return false;
-			if (args.regex && !e.match(new RegExp(args.regex))) return false;
-			return true;
-		})
-
-
-		if (sector.scripts.length === 0) {
-			if (args.showEmpty) sector.scripts.push("No Scripts Cached");
-			else continue;
+		if (!sec_count.includes(script.sector)) {
+			sec_count.push(script.sector)
+			sector_count.total++;
 		}
 
-		if (!args.showStale && new Date().getTime() - sector.z > 12 * 60 * 60 * 1000) continue;
-		sector_count.filtered++;
-		script_count.filtered += sector.scripts.length;
+		let filter_pass = true;
+		if (args.name && script.name !== args.name) filter_pass = false;
+		if (args.publics && !script.ikey.endsWith(".public")) filter_pass = false;
+		if (args.prefix && !script.ikey.startsWith(args.prefix)) filter_pass = false;
+		if (args.postfix && !script.ikey.endsWith(args.postfix)) filter_pass = false;
+		if (args.regex && !script.ikey.match(new RegExp(args.regex))) filter_pass = false;
+		if (!filter_pass) continue;
 
-		l.log(``)
-		l.log(`\`4Query results for sector\` ${sector.sector} - Last Scanned ${get_hhmmss(new Date().getTime() - sector.z)} ago`)
-		switch (sector.level.toLowerCase()) {
+		if (!sector) {
+			sector = sectors[script.sector] = [];
+			sector_count.filtered++;
+		}
+
+		if (!script.reports) script.reports = []
+		if (!script.tags) script.tags = []
+		if (script.z < stale_time) script.is_stale = true
+		else script.is_stale = false
+		script_count.filtered++;
+		if (script.ikey.length > longest_script_name) longest_script_name = script.ikey.length
+
+		sector.push(script);
+	}
+
+	let sector_info = Object.keys(sectors).map((e) => ({ sector: e, scripts: sectors[e] }));
+
+	for (let i = 0; i < sector_info.length; i++) {
+		let sector = sector_info[i];
+
+		l.log(`\n\`4Query results for sector\` ${sector.sector} - Last Scanned ${get_hhmmss(new Date().getTime() - sector.scripts[0].z)} ago`)
+		switch (sector.scripts[0].level.toLowerCase()) {
 			case "fullsec":
 				l.log(`\`2FULLSEC:\``);
 				break;
@@ -178,38 +220,77 @@ export default (context: Context, args: {
 				break;
 		}
 
-		let longest_script_name = Math.max(...sector.scripts.map((e) => e.length));
+		for (let j = 0; j < sector.scripts.length; j++) {
+			if (args.name) {
+				let script = sector.scripts[j]
+				let name = script.ikey.replace("#", ".");
+				let tag_string = script.tags.length > 0 ? script.tags.join(", ") : "No Tags";
+				let report_str = script.reports.length > 0
+					? script.reports.length > 1
+						? `\`E${script.reports.length} scam reports\``
+						: `\`E${script.reports.length} scam report\``
+					: "No Scams Reported";
 
-		sector.scripts.map((e, i,) => {
-			let manifest = Object.assign(empty_manifest, reports[e.replace(".", "#")])
-			let tag_str = manifest.tags.length > 0 ? manifest.tags.join(", ") : "No Tags"
-			let report_str = "`2No Scams Reported`"
-			if (manifest.reports)
-				if (manifest.reports.length > 1 || manifest.reports.length === 0)
-					report_str = `\`E${manifest.reports.length} scam reports\``
-				else report_str = `\`E${manifest.reports.length} scam report\``
+				l.log(
+					`Name: ${name}\n`
+					+ `Sector: ${script.sector}\n`
+					+ `Level: ${script.level}\n`
+					+ `Tags: ${tag_string}\n`
+					+ `Reports: ${report_str} in the last 24 hours\n`
+					+ `Script last indexed: ${get_hhmmss(new Date().getTime() - script.z)} ago\n`
+					+ `Open source: ${script.source ? "Yes" : "No"}\n`
+					+ `${script.source ? "Source: " + script.source : ""}\n`
+					+ `Author: ${script.name.split(".")[0]}\n`
+				)
 
-			l.log(`\`4${pad(i + 1 + "", 4, 0)} - ${pad(e, longest_script_name, 1)}\`\`4 | \`${report_str}\`4 | \`\`8${tag_str}\``);
-		});
+				if (context.caller === script.name.split(".")[0]) {
+					l.log(`You are the author of this script\n`
+						+ "If you wish to modify the listing, please contact @altrius_codes on discord\n"
+						+ "Please understand that scam reports will not be modified unless proof of abuse is provided\n"
+						+ "If your script is open source, please send me a link to the code, so I may add it to the database"
+					)
+				}
+
+			} else {
+				let script = sector.scripts[j]
+				let name = script.ikey.replace("#", ".");
+				let tag_string = script.tags.length > 0 ? script.tags.join(", ") : "No Tags";
+				let report_str = script.reports.length > 0
+					? script.reports.length > 1
+						? `\`E${script.reports.length} scam reports\``
+						: `\`E${script.reports.length} scam report\``
+					: "No Scams Reported";
+
+				if (script.is_stale)
+					l.log(`\`4${pad(j + 1 + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`\`ISTALE\`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
+				else
+					l.log(`\`4${pad(j + 1 + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`\`Y     \`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
+			}
+
+		}
 	}
-	l.log(``)
+
 	let duration = new Date().getTime() - instant;
-	l.log(`\`YShowing ${sector_count.filtered} of ${sector_count.total} sectors\``)
-	l.log(`\`YShowing ${script_count.filtered} of ${script_count.total} scripts\``)
-	l.log(`\`YSearch took ${duration} milliseconds to complete\``)
-	l.log(`Can't find what you're looking for? Use the argument`)
-	l.log(`{ showStale: true } to show results which are stale`)
+	l.log(`\n\`YShowing ${sector_count.filtered} of ${sector_count.total} sectors\`\n`
+		+ `\`YShowing ${script_count.filtered} of ${script_count.total} scripts\`\n`
+		+ `\`YSearch took ${duration} milliseconds to complete\`\n`
+		+ `Can't find what you're looking for? Use the argument\n`
+		+ `{ showStale: true } to show results which are stale`)
 
 
 	/**
 	 * == SECTION: DONATIONS ==
 	 */
-	l.log(``)
-	l.log(`\`6Want to support my work? Feeling generous?\``)
-	l.log(`\`6Use altrius.donate {donate:<amount>} to thank me!\``)
+	l.log(`\n\`6Want to support my work? Feeling generous?\`\n\`6Use altrius.donate {donate:<amount>} to thank me!\``)
 	$fs.chats.send({
-		channel: "magnificent_mansion",
-		msg: "\nI just used altrius.findr to find " + script_count.filtered + " scripts \nin " + sector_count.filtered + " sectors. I hope you like it!"
+		channel: "0000",
+		msg: `\n` +
+			`I just used altrius.findr to search for something!\n` +
+			`Found: ${script_count.filtered} scripts.\n` +
+			`Across ${sector_count.filtered} sectors.\n` +
+			`Did you know that you can report scams now?\n` +
+			`altrius.findr {report: "some.script"}\n` +
+			`altrius.findr, in search of a better MUD`
 	})
 	return end()
 }

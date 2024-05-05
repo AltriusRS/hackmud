@@ -4,14 +4,17 @@
  * CAUTION: EARLY ACCESS
  */
 export default (context: Context, args: { operand: string, command: string, query: string }) => {
-    if (!context.calling_script) return {
-        ok: false, msg: "`eUNAUTHORIZED` - This script is only for use by permitted users.\nYou are not 'permitted users'"
-    }
-    else if (!context.calling_script.startsWith("altrius.")) return {
-        ok: false, msg: "`eUNAUTHORIZED` - This script is only for use by permitted users.\nYou are not 'permitted users'"
-    }
-    if (!args.command || !args.query || !args.operand) return {
-        ok: false, msg: "`eUNAUTHORIZED` - This script is only for use by permitted users.\nYou are not 'permitted users'"
+    let check_bypass = context.caller === "fatalcenturion" || context.caller === "altrius"
+    if (!check_bypass) {
+        if (!context.calling_script) return {
+            ok: false, msg: "`eUNAUTHORIZED` - This script is only for use by permitted users.\nYou are not 'permitted users'"
+        }
+        else if (!context.calling_script.startsWith("altrius.")) return {
+            ok: false, msg: "`eUNAUTHORIZED` - This script is only for use by permitted users.\nYou are not 'permitted users'"
+        }
+        if (!args.command || !args.query || !args.operand) return {
+            ok: false, msg: "`eUNAUTHORIZED` - This script is only for use by permitted users.\nYou are not 'permitted users'"
+        }
     }
 
     let command = JSON.parse(args.command as string) as any;
