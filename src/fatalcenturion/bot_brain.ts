@@ -4,11 +4,17 @@
  * CAUTION: EARLY ACCESS
  */
 export default (context: Context, args: { mspt: number }) => {
-    if (!args) args = { mspt: 9 };
+    // allow the user to override the default number of sectors per trigger
+    if (!args) args = { mspt: 5 };
     const MAX_SECTORS_PER_TRIGGER = args.mspt;
+
+
     $hs.chats.tell({ to: "altrius", msg: "I'm working" });
+
+    // get the queue
     let queue = $db.f({ key: "bot_queue" }).first_and_close() as { _id: unknown, key: string, sectors: any[] };
 
+    // Fetch all sectors from the server and add the missing ones to the queue
     let levels: [string, string[]][] = [];
 
     levels[0] = ["nullsec", $fs.scripts.nullsec()];
