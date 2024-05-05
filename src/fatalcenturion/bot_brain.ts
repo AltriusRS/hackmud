@@ -3,46 +3,46 @@
  * @description A utility script designed to locate things for people
  * CAUTION: EARLY ACCESS
  */
-export default (context: Context, args: unknown) => {
-    const MAX_SECTORS_PER_TRIGGER = 9;
+export default (context: Context, args: { mspt: number }) => {
+    if (!args) args = { mspt: 9 };
+    const MAX_SECTORS_PER_TRIGGER = args.mspt;
     $hs.chats.tell({ to: "altrius", msg: "I'm working" });
+    let queue = $db.f({ key: "bot_queue" }).first_and_close() as { _id: unknown, key: string, sectors: any[] };
 
-    // let levels: [string, string[]][] = [];
+    let levels: [string, string[]][] = [];
 
-    // levels[0] = ["nullsec", $fs.scripts.nullsec()];
-    // levels[1] = ["lowsec", $fs.scripts.lowsec()];
-    // levels[2] = ["midsec", $fs.scripts.midsec()];
-    // levels[3] = ["highsec", $fs.scripts.highsec()];
-    // levels[4] = ["fullsec", $fs.scripts.fullsec()];
+    levels[0] = ["nullsec", $fs.scripts.nullsec()];
+    levels[1] = ["lowsec", $fs.scripts.lowsec()];
+    levels[2] = ["midsec", $fs.scripts.midsec()];
+    levels[3] = ["highsec", $fs.scripts.highsec()];
+    levels[4] = ["fullsec", $fs.scripts.fullsec()];
 
-    // let queue = {
-    //     key: "bot_queue",
-    //     sectors: [],
-    //     last_triggered: new Date(),
-    // }
 
-    // for (let i = 0; i < levels.length; i++) {
-    //     let [level, sectors] = levels[i];
-    //     queue.sectors = queue.sectors.concat(sectors.filter(/([A-Z]+_){2}\d/.exec).map((sector) => ({ level, sector })));
-    // }
-    // $db.us({ key: "bot_queue" }, {
-    //     $set: queue,
-    // });
+    // for each level, add all the sectors to the queue if they are not already in there
+    for (let i = 0; i < levels.length; i++) {
+        let [level, sectors] = levels[i];
 
-    let query = $db.f({ key: "bot_queue" }).first_and_close() as { _id: unknown, key: string, sectors: any[] };
+        // filter out sectors which are invalid
+        sectors = sectors.filter((e) => /([A-Z]+_){2}\d/.exec(e));
 
+        // add sectors to the queue only if they are not already in the queue
+        sectors = sectors.filter((sector) => !queue.sectors.find((s) => s.sector === sector));
+        $hs.chats.tell({ to: "altrius", msg: "Added " + sectors.length + " " + level + " sectors" });
+
+        queue.sectors = queue.sectors.concat(sectors.map((sector) => ({ level, sector })));
+    }
 
     // take the first MAX_SECTORS_PER_TRIGGER from the queue
-    let thisRun = query.sectors.slice(0, MAX_SECTORS_PER_TRIGGER).map((s) => {
+    let thisRun = queue.sectors.slice(0, MAX_SECTORS_PER_TRIGGER).map((s) => {
         return {
             ...s,
             last_triggered: new Date(),
         }
     });
-    let nextRun = query.sectors.slice(MAX_SECTORS_PER_TRIGGER + 1);
-    query.sectors = [].concat(nextRun, thisRun);
+    let nextRun = queue.sectors.slice(MAX_SECTORS_PER_TRIGGER + 1);
+    queue.sectors = [].concat(nextRun, thisRun);
     $db.us({ key: "bot_queue" }, {
-        $set: query as any,
+        $set: queue as any,
     });
 
     for (let i = 0; i < thisRun.length; i++) {
@@ -71,7 +71,7 @@ export default (context: Context, args: unknown) => {
             $set: {
                 level,
                 scripts,
-                z: new Date(),
+                z: new Date().getTime(),
             },
         });
     }

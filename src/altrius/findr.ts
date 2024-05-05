@@ -12,7 +12,8 @@ export default (context: Context, args: {
 	prefix?: string,          // The prefix to search for
 	postfix?: string,         // The postfix to search for
 	regex?: string,           // A regular expression to search for
-	ignoreEmpty?: boolean,    // Whether to ignore empty results
+	showEmpty: boolean,       // Whether to show empty results
+	showStale?: boolean,      // Whether to show results which are considered stale (IE: those over 12 hours old)
 }) => {
 
 	// Preload the stdlib
@@ -31,13 +32,12 @@ export default (context: Context, args: {
 
 	if (args) {
 		let filters = Object.keys(args)
-		let invalids = filters.filter((e) => !["ignoreEmpty", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
+		let invalids = filters.filter((e) => !["showEmpty", "showStale", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
 		if (invalids.length > 0) {
 			invalids.map((e) => l.log(`\`DInvalid argument: ${e}\``))
 			is_valid = false
 		}
 	} else is_valid = false
-
 
 	// If no arguments are provided, print a help message
 	if (!is_valid) {
@@ -45,7 +45,8 @@ export default (context: Context, args: {
 		l.log(`Meet ${context.this_script}`)
 		l.log("The always free script finder!")
 		l.log("To get started, use the arguments below to find scripts you might be interested in")
-		l.log("- `2ignoreEmpty` - Ignores empty results")
+		l.log("- `2showEmpty`   - Shows empty results")
+		l.log("- `2showStale`   - Show results which are considered stale (IE: those over 12 hours old)")
 		l.log("- `2level`       - The security level to search within")
 		l.log("- `2sector`      - The sector to search within")
 		l.log("- `2publics`     - Whether to show only scripts ending in `2.public`")
@@ -71,10 +72,14 @@ export default (context: Context, args: {
 	if (Object.keys(args).length === 0) return $fs.scripts.quine()
 
 	// Query the db for the sector
-	let response = JSON.parse($fs.fatalcenturion.db({ operand: "f", command: JSON.stringify({}), query: JSON.stringify({ sector: args.sector, level: args.level }) }));
+	let response = JSON.parse($fs.fatalcenturion.db({ operand: "f", command: JSON.stringify({}), query: JSON.stringify({ sector: args.sector, level: args.level }) })).filter((e) => e.level && e.sector);
+	let sector_count = { filtered: 0, total: 0 };
+	let script_count = { filtered: 0, total: 0 };
 
 	for (let i = 0; i < response.length; i++) {
 		let sector = response[i];
+		sector_count.total++;
+		script_count.total += sector.scripts.length;
 
 		if (!sector.scripts || sector.scripts.length === 0) sector.scripts = ["No Scripts Cached"]
 
@@ -88,13 +93,16 @@ export default (context: Context, args: {
 
 
 		if (sector.scripts.length === 0) {
-			if (args.ignoreEmpty) continue;
-			else sector.scripts.push("No Scripts Cached")
+			if (args.showEmpty) sector.scripts.push("No Scripts Cached");
+			else continue;
 		}
 
+		if (!args.showStale && new Date().getTime() - sector.z > 12 * 60 * 60 * 1000) continue;
+		sector_count.filtered++;
+		script_count.filtered += sector.scripts.length;
 
 		l.log(``)
-		l.log(`\`4Query results for sector\` ${sector.sector} - Last Scanned ${get_hhmmss(new Date().getTime() - new Date(sector.z).getTime())} ago`)
+		l.log(`\`4Query results for sector\` ${sector.sector} - Last Scanned ${get_hhmmss(new Date().getTime() - sector.z)} ago`)
 		switch (sector.level.toLowerCase()) {
 			case "fullsec":
 				l.log(`\`2FULLSEC:\``);
@@ -115,6 +123,11 @@ export default (context: Context, args: {
 
 		sector.scripts.map((e) => l.log(`\`4- ${e}\``));
 	}
+	l.log(``)
+	l.log(`Showing ${sector_count.filtered} of ${sector_count.total} sectors`)
+	l.log(`Showing ${script_count.filtered} of ${script_count.total} scripts`)
+	l.log(`Can't find what you're looking for? Use the argument`)
+	l.log(`{ showStale: true } to show results which are stale`)
 
 
 	/**
