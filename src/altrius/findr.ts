@@ -244,7 +244,7 @@ export default (context: Context, args: {
 
 				if (context.caller === name.split(".")[0]) {
 					l.log("`YYou are the author of this script`\n"
-						+ "`7If you wish to modify the listing, please contact @altrius_codes on discord`\n"
+						+ "`7If you wish to modify the listing, please contact ``G@altrius_codes``8 on discord`\n"
 						+ "`7If your script is open source, please send me a link to the code, so I may add it to the database`\n"
 						+ "`7Please understand that scam reports will not be modified unless proof of abuse is provided`"
 					)
