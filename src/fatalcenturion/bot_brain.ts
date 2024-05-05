@@ -4,7 +4,7 @@
  * CAUTION: EARLY ACCESS
  */
 export default (context: Context, args: unknown) => {
-    const MAX_SECTORS_PER_TRIGGER = 10;
+    const MAX_SECTORS_PER_TRIGGER = 9;
 
     // let levels: [string, string[]][] = [];
 
