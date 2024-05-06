@@ -18,6 +18,8 @@ export default (context: Context, args: {
 	regex?: string,           // A regular expression to search for
 	showStale?: boolean,      // Whether to show results which are considered stale (IE: those over 12 hours old)
 	source?: boolean,         // Whether to show the source code of the findr script
+	metrics?: boolean,        // Whether to show the metrics
+	open?: string,            // Mark the target script as open (takes a url)
 }) => {
 	const end = () => {
 		let log = l.get_log().join("\n").replaceAll('"', '')
@@ -36,14 +38,14 @@ export default (context: Context, args: {
 		+ "\n`n+#+            +#+     +#+  +#+#+# +#+    +#+ +#+    +#+ `"
 		+ "\n`p#+#            #+#     #+#   #+#+# #+#    #+# #+#    #+# `"
 		+ "\n`3###        ########### ###    #### #########  ###    ### `"
-		+ "\n`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.1.3 `"
+		+ "\n`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.1.5 `"
 		+ "\n`8                       ‾‾‾‾‾‾‾‾    ‾‾‾‾‾‾‾‾‾‾‾`");
 
 	let is_valid = true
 
 	if (args) {
 		let filters = Object.keys(args)
-		let invalids = filters.filter((e) => !["tag", "tags", "name", "report", "showStale", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
+		let invalids = filters.filter((e) => !["metrics", "open", "tag", "tags", "name", "report", "showStale", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
 		if (invalids.length > 0) {
 			invalids.map((e) => l.log(`\`DInvalid argument: ${e}\``))
 			is_valid = false
@@ -80,76 +82,19 @@ export default (context: Context, args: {
 		return end()
 	}
 
-	if (args.tag && context.caller === "altrius") {
-		const ikey = args.tag.replace(".", "#")
-		let manifest = query_db("f", {}, { ikey })[0]
+	if (args.tag || args.report || args.metrics || args.open) {
+		let op = args.tag ? "tag" :
+			args.metrics ? "metrics" :
+				args.report ? "report" : "open"
 
-		let tags = (typeof args.tags === "string") ? args.tags.split(",").map((e) => e.trim()) : args.tags
-
-		l.log("Script tagged, thank you")
-		if (!manifest) {
-			query_db("us", {
-				$set: {
-					__script: true,
-					ikey,
-					level: "unknown",
-					sector: "unknown",
-					tags,
-					reports: [],
-					z: new Date().getTime(),
-				}
-			}, { ikey })
-		} else {
-			query_db("u1", {
-				$set: {
-					tags,
-					z: new Date().getTime(),
-				}
-			}, { ikey })
-		}
-		return end()
-	}
-
-	if (args.report) {
-		const ikey = args.report.replace(".", "#")
-		l.log("Reporting script: " + args.report)
-		let manifest = query_db("f", {}, { ikey })[0]
-
-		let report = { victim: context.caller, z: new Date().getTime() }
-		if (!manifest) {
-			query_db("us", {
-				$set: {
-					__script: true,
-					ikey,
-					level: "unknown",
-					sector: "unknown",
-					tags: [],
-					reports: [report],
-					z: new Date().getTime(),
-				}
-			}, { ikey })
-		} else {
-			// // Filter out reports from more than 24 hours ago
-			manifest.reports = manifest.reports.filter((e) => e.z > new Date().getTime() - (4_3200_000 * 2))
-
-			let prevReport = manifest.reports.find((e) => e.victim === context.caller);
-			let canReport = !prevReport;
-			// Check if the user has already reported this script in the last 24 hours
-			if (!canReport) {
-				l.log(`\`DYou have already reported this script in the last 24 hours\``)
-				return end()
+		return $fs.altrius.lib_modify({
+			op,
+			passthrough: {
+				ikey: (args.tag || args.report || args.name || "").replace(".", "#"),
+				tags: args.tags,
+				url: args.open
 			}
-			manifest.reports.push(report)
-			query_db("u1", {
-				$set: {
-					reports: manifest.reports,
-					z: new Date().getTime(),
-				}
-			}, { ikey })
-		}
-
-		l.log("Report sent, thank you")
-		return end()
+		})
 	}
 
 
@@ -178,6 +123,7 @@ export default (context: Context, args: {
 		if (args.prefix && !script.ikey.startsWith(args.prefix)) filter_pass = false;
 		if (args.postfix && !script.ikey.endsWith(args.postfix)) filter_pass = false;
 		if (args.regex && !script.ikey.match(new RegExp(args.regex))) filter_pass = false;
+		if (!args.showStale && script.z < stale_time) filter_pass = false;
 		if (!filter_pass) continue;
 
 		if (!sector) {
@@ -199,23 +145,22 @@ export default (context: Context, args: {
 
 	for (let i = 0; i < sector_info.length; i++) {
 		let sector = sector_info[i];
-
-		l.log(`\n\`4Query results for sector\` ${sector.sector} - Last Scanned ${get_hhmmss(new Date().getTime() - sector.scripts[0].z)} ago`)
+		let sec_level = "UNKNOWN";
 		switch (sector.scripts[0].level.toLowerCase()) {
 			case "fullsec":
-				l.log(`\`2FULLSEC:\``);
+				sec_level = `\`2FULLSEC\``
 				break;
 			case "highsec":
-				l.log(`\`HHIGHSEC:\``);
+				sec_level = `\`HHIGHSEC\``
 				break;
 			case "midsec":
-				l.log(`\`5MIDSEC:\``);
+				sec_level = `\`5MIDSEC \``
 				break;
 			case "lowsec":
-				l.log(`\`DLOWSEC:\``);
+				sec_level = `\`DLOWSEC \``
 				break;
 			case "nullsec":
-				l.log(`\`VNULLSEC:\``);
+				sec_level = `\`VNULLSEC\``
 				break;
 		}
 
@@ -226,19 +171,19 @@ export default (context: Context, args: {
 			let tag_string = script.tags.length > 0 ? script.tags.map((e) => e.split(" ").map((f) => f.charAt(0).toUpperCase() + f.slice(1)).join(" ")).join(", ") : "No Tags";
 			let report_str = script.reports.length > 0
 				? script.reports.length > 1
-					? `\`E${script.reports.length} scam reports\``
-					: `\`E${script.reports.length} scam report\``
+					? `\`E${script.reports.length} Scam Reports\``
+					: `\`E${script.reports.length} Scam Report\``
 				: "No Scams Reported";
 			if (args.name) {
 				l.log(
 					`Name: ${name}\n`
 					+ `Sector: ${script.sector}\n`
-					+ `Level: ${script.level}\n`
+					+ `Level: ${sec_level}\n`
 					+ `Tags: ${tag_string}\n`
 					+ `Reports: ${report_str} in the last 24 hours\n`
-					+ `Script last indexed: ${get_hhmmss(new Date().getTime() - script.z)} ago\n`
-					+ `Open source: ${script.source ? "Yes" : "No"}\n`
-					+ `${script.source ? "Source: " + script.source : ""}\n`
+					+ `Script last indexed: \`8${get_hhmmss(new Date().getTime() - script.z)}\` ago\n`
+					+ `Open source: ${script.open ? "\`2Yes\`" : "\`DNo\`"}\n`
+					+ `${script.open ? "Source: " + script.open : ""}\n`
 					+ `Author: ${name.split(".")[0]}\n`
 				)
 
@@ -251,9 +196,9 @@ export default (context: Context, args: {
 				}
 			} else {
 				if (script.is_stale)
-					l.log(`\`4${pad(j + 1 + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`\`ISTALE\`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
+					l.log(`\`4${pad(j + 1 + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`${sec_level}\`4 | \`\`ISTALE\`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
 				else
-					l.log(`\`4${pad(j + 1 + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`\`Y     \`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
+					l.log(`\`4${pad(j + 1 + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`${sec_level}\`4 | \`\`Y     \`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
 			}
 
 		}
@@ -266,6 +211,7 @@ export default (context: Context, args: {
 		+ `Can't find what you're looking for? Use the argument\n`
 		+ `{ showStale: true } to show results which are stale`)
 
+	$fs.altrius.lib_modify({ op: "search", passthrough: { stats: { scripts: script_count.filtered, sectors: sector_count.filtered } } })
 
 	/**
 	 * == SECTION: DONATIONS ==

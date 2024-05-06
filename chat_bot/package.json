@@ -1,0 +1,21 @@
+{
+  "name": "chat_bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@com1killer/hackmud-chat-api": "^1.0.3",
+    "dotenv": "^16.4.5",
+    "hackmud-chat": "^0.5.1",
+    "mongodb": "^6.6.0",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.8"
+  }
+}

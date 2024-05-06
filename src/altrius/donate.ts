@@ -46,6 +46,7 @@ export default (context: Context, args: {
             l.log("`FThank you for your donation!`")
             dono.msg.map((m) => l.log(m))
             $fs.chats.tell({ to: "altrius", msg: "I just donated `2" + args.donate + "` to you and the wizMUD community" })
+            $fs.altrius.lib_modify({ op: "donate", passthrough: { amount: (typeof args.donate === "string") ? l.to_gc_num(args.donate) : args.donate } })
         }
     }
 
