@@ -9,7 +9,7 @@ const COOLDOWN = 1000 * 60 * 5; // Cooldown 5 minutes per dangerous script
 
 const enable_ads = true;
 const ad_rate = 1_000 * 60 * 5; // Send an ad every 5 minutes
-const ads_channel = "findr_testing";
+const ads_channel = "0000";
 
 const scam_alerts_enabled = false;
 const scam_alert_channel = "findr_testing";
@@ -145,11 +145,11 @@ async function main() {
     console.log("Connecting to chat");
     if (enable_ads) {
         console.log("Ads Enabled");
-        adChannel.sendIntervalRandom(ads.map(a => a.join("\n")), ad_rate);
-        // setInterval(() => {
-        //     let random_ad = ads[Math.floor(Math.random() * ads.length)]
-        //     adChannel.send(random_ad.join("\n"))
-        // }, ad_rate);
+        // adChannel.send(ads[0].join("\n"));
+        setInterval(() => {
+            let random_ad = ads[Math.floor(Math.random() * ads.length)]
+            adChannel.send(random_ad.join("\n"))
+        }, ad_rate);
     }
 
 
