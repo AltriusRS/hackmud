@@ -8,7 +8,7 @@ const client = new MongoClient(process.env.MONGO_URI);
 const COOLDOWN = 1000 * 60 * 5; // Cooldown 5 minutes per dangerous script
 
 const enable_ads = true;
-const ad_rate = 1_000 * 60 * 5; // Send an ad every 5 minutes
+const ad_rate = 1_000 * 60 * 15; // Send an ad every 5 minutes
 const ads_channel = "0000";
 
 const scam_alerts_enabled = false;
@@ -91,7 +91,7 @@ const footer = [
     "",
     "Found a scam? Report it using",
     "altrius.findr {report: \"some.script\"}",
-    "",
+    "         `LAlways FULLSEC`",
     "`YScript Reports - Powered by Findr`",
     "     `YIn Search of Better`",
     ""
@@ -100,20 +100,20 @@ const footer = [
 const ads = [
     [
         "",
-        "`5+:+:+:+:+:`",
-        "`f:+:`      `Y         Findr        `",
-        "`g+:+`      `Y  In Search of Better `",
-        "`o:+::+::+` ",
-        "`n+:+`           `2Did You Know?`",
-        "`p:+:`    `8You can report scam scripts?`",
-        "`3+:+` `8altrius.findr {report: \"some.script\"}`",
+        "`5+:+:+:+:+:``Y         Findr        `",
+        "`f:+:`       `Y  In Search of Better `",
+        "`g+:+`           `YAlways FULLSEC`",
+        "`o:+::+::+`  ",
+        "`n+:+`            `2Did You Know?`",
+        "`p:+:`     `8You can report scam scripts?`",
+        "`3+:+`  `8altrius.findr {report: \"some.script\"}`",
         ""
     ],
     [
         "",
-        "`5+:+:+:+:+:`",
-        "`f:+:`        `Y         Findr        `",
-        "`g+:+`        `Y  In Search of Better `",
+        "`5+:+:+:+:+:``Y         Findr        `",
+        "`f:+:`       `Y  In Search of Better `",
+        "`g+:+`           `YAlways FULLSEC`",
         "`o:+::+::+` ",
         "`n+:+`        `2Cant find that script?`",
         "`p:+:`  `8Use our powerful search to find it!`",
@@ -145,7 +145,7 @@ async function main() {
     console.log("Connecting to chat");
     if (enable_ads) {
         console.log("Ads Enabled");
-        // adChannel.send(ads[0].join("\n"));
+        adChannel.send(ads[0].join("\n"));
         setInterval(() => {
             let random_ad = ads[Math.floor(Math.random() * ads.length)]
             adChannel.send(random_ad.join("\n"))

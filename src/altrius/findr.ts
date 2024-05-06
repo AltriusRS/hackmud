@@ -225,7 +225,7 @@ export default (context: Context, args: {
 			`Across ${sector_count.filtered} sectors.\n` +
 			`Did you know that you can report scams now?\n` +
 			`altrius.findr {report: "some.script"}\n` +
-			"`YFindr - in search of a better MUD`"
+			"`YFindr - In Search of Better`"
 	})
 	return end()
 }
