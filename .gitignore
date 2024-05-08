@@ -1,3 +1,4 @@
 node_modules
 player.d.ts
 _example.*s
+*.env
