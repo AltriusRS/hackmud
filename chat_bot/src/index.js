@@ -4,6 +4,8 @@ const { MongoClient } = require('mongodb');
 require("dotenv").config();
 // var chat = new HackmudChatAPI(process.env.TOKEN);
 const client = new MongoClient(process.env.MONGO_URI);
+const fs = require("fs");
+const JSON5 = require("json5");
 
 const COOLDOWN = 1000 * 60 * 5; // Cooldown 5 minutes per dangerous script
 
@@ -99,30 +101,7 @@ const footer = [
     ""
 ]
 
-const ads = [
-    [
-        "",
-        "`5+:+:+:+:+:``Y         Findr        `",
-        "`f:+:`       `Y  In Search of Better `",
-        "`g+:+`           `YAlways FULLSEC`",
-        "`o:+::+::+`  ",
-        "`n+:+`            `2Did You Know?`",
-        "`p:+:`     `8You can report scam scripts?`",
-        "`3+:+`    `8find.r {report: \"some.script\"}`",
-        ""
-    ],
-    [
-        "",
-        "`5+:+:+:+:+:``Y         Findr        `",
-        "`f:+:`       `Y  In Search of Better `",
-        "`g+:+`           `YAlways FULLSEC`",
-        "`o:+::+::+` ",
-        "`n+:+`        `2Cant find that script?`",
-        "`p:+:`  `8Use our powerful search to find it!`",
-        "`3+:+`         `8find.r for more info`",
-        ""
-    ]
-]
+
 
 
 
@@ -148,11 +127,10 @@ async function main() {
     console.log("Logged in as", user.name)
     if (enable_ads) {
         console.log("Ads Enabled");
-        adChannel.send(ads[0].join("\n"));
+        adChannel.send(getRandomAdvert());
         setInterval(() => {
             console.log("Sending ad");
-            let random_ad = ads[Math.floor(Math.random() * ads.length)]
-            adChannel.send(random_ad.join("\n"))
+            adChannel.send(getRandomAdvert())
         }, ad_rate);
     }
 
@@ -247,4 +225,10 @@ async function main() {
             };
         });
     }, 2_000);
+}
+
+
+function getRandomAdvert() {
+    let ads = JSON5.parse(fs.readFileSync("./src/ads.json", "utf8"));
+    return ads[Math.floor(Math.random() * ads.length)].join("\n")
 }

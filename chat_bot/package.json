@@ -12,6 +12,7 @@
     "@com1killer/hackmud-chat-api": "^1.0.3",
     "dotenv": "^16.4.5",
     "hackmud-chat": "^0.5.1",
+    "json5": "^2.2.3",
     "mongodb": "^6.6.0",
     "request": "^2.88.2"
   },
