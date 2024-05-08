@@ -41,7 +41,7 @@ export default (context: Context, args: {
 		+ "\n`n+#+            +#+     +#+  +#+#+# +#+    +#+ +#+    +#+ `"
 		+ "\n`p#+#            #+#     #+#   #+#+# #+#    #+# #+#    #+# `"
 		+ "\n`3###        ########### ###    #### #########  ###    ### `"
-		+ "\n`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.1.5 `"
+		+ "\n`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.2.0 `"
 		+ "\n`8                       ‾‾‾‾‾‾‾‾    ‾‾‾‾‾‾‾‾‾‾‾`");
 
 	let is_valid = true
@@ -109,14 +109,29 @@ export default (context: Context, args: {
 
 	let instant = new Date().getTime();
 	// Query the db for the sector
-	let response = (args.name ? query_db("f", {}, { __script: true, ikey }) : query_db("f", {}, { __script: true, sector: args.sector, level: args.level })) as any[];
-	let sector_count = { filtered: 0, total: 0 };
-	let script_count = { filtered: 0, total: 0 };
+
+	let filter = {} as any
+	let stale_time = new Date().getTime() - 4_3200_000;
+
+	if (args.name) filter.ikey = ikey
+	if (args.level) filter.level = args.level.toLowerCase()
+	if (args.sector) filter.sector = args.sector
+	if (args.user) filter.ikey = { $regex: `^${args.user}#.*` };
+	if (args.prefix) filter.ikey = { $regex: `^${args.prefix}.*` };
+	if (args.postfix) filter.ikey = { $regex: `.*${args.postfix}$` };
+	if (args.regex) filter.ikey = { $regex: args.regex };
+	if (args.showStale) filter.z = { $lte: stale_time };
+
+
+	let response = query_db("f", {}, filter) as any[];
+	let _metrics = query_db("f", {}, { __metrics: true })[0];
+
+	let sector_count = { filtered: 0, total: _metrics.sectors };
+	let script_count = { filtered: 0, total: _metrics.scripts };
 	let sec_count = [];
 	let sectors = {}
 	let longest_script_name = 0
 
-	let stale_time = new Date().getTime() - 4_3200_000;
 	for (let i = 0; i < response.length; i++) {
 		let script = response[i];
 		let sector = sectors[script.sector];
@@ -124,26 +139,9 @@ export default (context: Context, args: {
 
 		if (!sec_count.includes(script.sector)) {
 			sec_count.push(script.sector)
-			sector_count.total++;
-		}
-
-		let filter_pass = true;
-		if (args.publics && !script.ikey.endsWith("#public")) filter_pass = false;
-		if (args.prefix && !script.ikey.startsWith(args.prefix)) filter_pass = false;
-		if (args.postfix && !script.ikey.endsWith(args.postfix)) filter_pass = false;
-		if (args.regex && !script.ikey.match(new RegExp(args.regex))) filter_pass = false;
-		if (!args.showStale && script.z < stale_time) filter_pass = false;
-		if (!filter_pass) continue;
-
-		if (!sector) {
 			sector = sectors[script.sector] = [];
 			sector_count.filtered++;
 		}
-
-		if (!script.reports) script.reports = []
-		if (!script.tags) script.tags = []
-		if (script.z < stale_time) script.is_stale = true
-		else script.is_stale = false
 		script_count.filtered++;
 		if (script.ikey.length > longest_script_name) longest_script_name = script.ikey.length
 
@@ -151,7 +149,6 @@ export default (context: Context, args: {
 	}
 
 	let sector_info = Object.keys(sectors).map((e) => ({ sector: e, scripts: sectors[e] }));
-
 	for (let i = 0; i < sector_info.length; i++) {
 		let sector = sector_info[i];
 		let sec_level = "UNKNOWN";
@@ -175,6 +172,9 @@ export default (context: Context, args: {
 
 		for (let j = 0; j < sector.scripts.length; j++) {
 			let script = sector.scripts[j]
+			if (!script.reports) script.reports = [];
+			if (!script.tags) script.tags = [];
+
 			let name = script.ikey.replace("#", ".");
 			// join and capitalize the first letter of each word
 			let tag_string = script.tags.length > 0 ? script.tags.map((e) => e.split(" ").map((f) => f.charAt(0).toUpperCase() + f.slice(1)).join(" ")).join(", ") : "No Tags";
@@ -249,6 +249,8 @@ function get_hhmmss(time: number) {
 }
 
 function query_db(operand: string, command: unknown, query: unknown): unknown {
+	let response = $fs.fatalcenturion.db({ operand, command, query })
+	return response.q
 	return $fs.fatalcenturion.db({ operand, command, query }).q
 }
 

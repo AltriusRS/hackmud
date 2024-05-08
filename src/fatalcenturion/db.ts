@@ -10,7 +10,7 @@ export default (context: Context, args: { operand: string, command: any, query: 
         if (!context.calling_script) return {
             ok: false, msg: "`eUNAUTHORIZED` - This script is only for use by permitted users.\nYou are not 'permitted users'"
         }
-        else if (!authUsers.includes()) return {
+        else if (!authUsers.includes(context.calling_script.split(".")[0])) return {
             ok: false, msg: "`eUNAUTHORIZED` - This script is only for use by permitted users.\nYou are not 'permitted users'"
         }
         if (!args.command || !args.query || !args.operand) return {
