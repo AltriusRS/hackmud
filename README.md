@@ -64,6 +64,8 @@ A script which allows you to donate to me, supporting the project and helping me
 
 ### Usage {find.donate.usage}
 
+`find.donate { <arguments> }` - [See the source!](./find/donate.ts)
+
 #### Arguments {find.donate.usage.arguments}
 
 | Parameter |   Type   | Required | Usage              | Description                    |
