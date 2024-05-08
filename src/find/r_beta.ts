@@ -256,9 +256,10 @@ export default (context: Context, args: {
 	let donations = query_db("f", {}, { __donation: true }, 5, { amount: -1 }) as any[];
 	if (donations) {
 		l.log(`\n\`6Thank you to the following donors:\``)
-
-		let donor_name_length = Math.max(...donations.map((d) => d.user.length))
-		let donor_amount_length = Math.max(...donations.map((d) => d.amount.toLocaleString().length))
+		let donor_list = donations.map((d) => d.user)
+		let donor_amount = donations.map((d) => d.amount.toLocaleString())
+		let donor_name_length = Math.max(...donor_list.map((d) => d.length))
+		let donor_amount_length = Math.max(...donor_amount.map((d) => d.length))
 
 		donations.map((d) => l.log(`\n\`6${pad(d.user, donor_name_length, 1)} -\` \`Y${pad(d.amount.toLocaleString().split(",").join("`,`Y"), donor_amount_length, 1)}GC\``))
 	}
@@ -266,7 +267,7 @@ export default (context: Context, args: {
 	l.log("`YThank you to our donors for funding the project.`")
 	l.log("`YYour donation is being used for the good of the community!`")
 	$fs.chats.send({
-		channel: "0000",
+		channel: "findr_testing",
 		msg: `\n` +
 			`I just used find.r to search for something!\n` +
 			`Found: ${script_count.filtered} scripts.\n` +
