@@ -7,10 +7,6 @@ export default (context: Context, args: { mspt: number }) => {
     // allow the user to override the default number of sectors per trigger
     if (!args) args = { mspt: 5 };
     const MAX_SECTORS_PER_TRIGGER = args.mspt;
-
-
-    $hs.chats.tell({ to: "altrius", msg: "I'm working" });
-
     // get the queue
     let queue = $db.f({ key: "bot_queue" }).first_and_close() as { _id: unknown, key: string, sectors: any[] };
 
@@ -40,9 +36,6 @@ export default (context: Context, args: { mspt: number }) => {
     }
     _metrics.sectors += sectors_added;
 
-    $hs.chats.tell({ to: "altrius", msg: "Added " + sectors_added + " sectors" });
-
-
     // take the first MAX_SECTORS_PER_TRIGGER from the queue
     let thisRun = queue.sectors.slice(0, MAX_SECTORS_PER_TRIGGER).map((s) => {
         return {
@@ -55,6 +48,9 @@ export default (context: Context, args: { mspt: number }) => {
     $db.us({ key: "bot_queue" }, {
         $set: queue as any,
     });
+
+
+    let scripts_added = 0;
 
     for (let i = 0; i < thisRun.length; i++) {
         let scripts = [];
@@ -81,7 +77,9 @@ export default (context: Context, args: { mspt: number }) => {
 
         for (let j = 0; j < scripts.length; j++) {
             let script = scripts[j];
-            // $D("Adding script " + script + " to " + sector + " with level " + level);
+            
+            let manifest = $db.f({ __script: true, ikey: script.replaceAll(".", "#") }).first_and_close();
+            if (!manifest) scripts_added++;
             $db.us({ __script: true, ikey: script.replaceAll(".", "#") }, {
                 $set: {
                     __script: true,
@@ -107,6 +105,6 @@ export default (context: Context, args: { mspt: number }) => {
         }
     });
 
-    $hs.chats.tell({ to: "altrius", msg: "I'm finished" });
+    $hs.chats.tell({ to: "altrius", msg: "Added " + sectors_added + " sectors\nAdded " + scripts_added + " scripts\nI'm finished" });
     return { ok: true, msg: "[Bot Brain] complete" };
 }

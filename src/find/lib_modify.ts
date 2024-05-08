@@ -18,6 +18,7 @@ export default (context: Context, args: {
         url?: string,
         usage?: string,
         description?: string,
+        regex?: string,
     }
 }) => {
     const authUsers = ["_index", "alt_rius", "altrius", "fatalcenturion", "find"];
@@ -51,29 +52,41 @@ export default (context: Context, args: {
     }
 
     if (op === "tag" && isAdmin && passthrough.tags) {
-        let manifest = query_db("f", {}, { ikey })[0]
         let tags = (typeof passthrough.tags === "string") ? passthrough.tags.split(",").map((e) => e.trim()) : passthrough.tags
+        let mode = passthrough.regex ? 0 : 1;
 
-        l.log("Script tagged, thank you")
-        if (!manifest) {
-            query_db("us", {
-                $set: {
-                    __script: true,
-                    ikey,
-                    level: "unknown",
-                    sector: "unknown",
-                    tags,
-                    reports: [],
-                    z: new Date().getTime(),
-                }
-            }, { ikey })
-        } else {
-            query_db("u1", {
+        if (mode === 0) {
+            let count = query_db("c", {}, { ikey: { $regex: passthrough.regex } });
+            query_db("u", {
                 $set: {
                     tags,
                     z: new Date().getTime(),
                 }
-            }, { ikey })
+            }, { ikey: { $regex: passthrough.regex } })
+            l.log(`${count} scripts tagged, thank you`)
+        } else if (mode === 1) {
+            let manifest = query_db("f", {}, { ikey })[0]
+            l.log("Script tagged, thank you")
+            if (!manifest) {
+                query_db("us", {
+                    $set: {
+                        __script: true,
+                        ikey,
+                        level: "unknown",
+                        sector: "unknown",
+                        tags,
+                        reports: [],
+                        z: new Date().getTime(),
+                    }
+                }, { ikey })
+            } else {
+                query_db("u1", {
+                    $set: {
+                        tags,
+                        z: new Date().getTime(),
+                    }
+                }, { ikey })
+            }
         }
     } else if (op === "report") {
         l.log("Reporting script: " + ikey.replace("#", "."))
@@ -172,7 +185,7 @@ export default (context: Context, args: {
         let last_scan = new Date(metrics.last_scan as number);
 
         // Add the cooldown to the previous scan
-        let next_scan = new Date(last_scan.getTime() + (bot_brain.cooldown)*1000);
+        let next_scan = new Date(last_scan.getTime() + (bot_brain.cooldown) * 1000);
         let difference = next_scan.getTime() - new Date().getTime()
         let countdown = to_hhmmss(Math.abs(difference))
         let stats = Object.entries(metrics).map(([k, v]) => {

@@ -8,7 +8,7 @@
 // @autocomplete {name: "some.script", report: "some.script", user: "username", publics: false, prefix: "some_prefix", postfix: "some_postfix", regex: "/[a-z0-9_\.]*/", showStale: false, source: false, name: "script.name", level: "fullsec", sector: "CHAOS_LAMBDA_3"
 export default (context: Context, args: {
 	tags?: string | string[], // The tags to add to the script (comma separated)
-	tag?: string,   		  // The script to tag
+	tag?: string,             // The script to tag
 	name?: string,   		  // The name of the script to search for
 	report?: string,          // Allows someone to report a scam script
 	level?: string,           // The level to search for
@@ -107,7 +107,8 @@ export default (context: Context, args: {
 				tags: args.tags,
 				url: args.open,
 				description: args.description,
-				usage: args.usage
+				usage: args.usage,
+				regex: args.regex
 			}
 		})
 	}
