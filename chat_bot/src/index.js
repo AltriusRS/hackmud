@@ -13,7 +13,7 @@ const enable_ads = true;
 const ad_rate = 1_000 * 60 * 30; // Send an ad every 30 minutes
 const ads_channel = "0000";
 
-const scam_alerts_enabled = true;
+const scam_alerts_enabled = false;
 const scam_alert_channel = "findr_testing";
 
 
