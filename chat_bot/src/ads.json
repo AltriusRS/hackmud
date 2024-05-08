@@ -7,7 +7,7 @@
         "`o:+::+::+`  ",
         "`n+:+`            `2Did You Know?`",
         "`p:+:`     `8You can report scam scripts?`",
-        "`3+:+`    `8find.r {report: \"some.script\"}`",
+        "`3+:+`    find.r {report: \"some.script\"}",
         ""
     ],
     [
@@ -18,7 +18,7 @@
         "`o:+::+::+` ",
         "`n+:+`        `2Cant find that script?`",
         "`p:+:`  `8Use our powerful search to find it!`",
-        "`3+:+`         `8find.r for more info`",
+        "`3+:+`        find.r {} `8for more info`",
         ""
     ],
     // [
@@ -40,7 +40,7 @@
         "`o:+::+::+` ",
         "`n+:+`          `2Looking for games?`",
         "`p:+:`          `8We got You covered!`",
-        "`3+:+`        `8find.r {tags: [\"game\"]}`",
+        "`3+:+`        find.r {tags: [\"game\"]}",
         ""
     ]
 ]
