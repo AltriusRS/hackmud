@@ -8,6 +8,7 @@ export default (context: Context, args: {
     donate?: string | number, // The amount to donate to the cause
     source?: boolean          // Whether to show the source code of the donation script
     is_script?: boolean       // Whether the script is being called from another script
+    donation_target?: string  // The target to send the donation to
     tax_rate?: number         // The tax rate to apply to the donation (default: 5%, max: 100%, min: 0%)
     tax_target?: string       // The target to send the tax to (default: wizMUD)
 }) => {
@@ -58,11 +59,11 @@ export default (context: Context, args: {
             l.log(`\t\`4We apologise for any inconvenience caused.\``)
         } else {
             // calculate a value to send to the donation cause based on a percentage
-            let tax = Math.abs(donation * (args.tax_rate / 100)); // 5% tax
+            let tax = Math.floor(Math.abs(donation * (args.tax_rate / 100))); // 5% tax
             let final = donation - tax; // donation minus tax
 
             let dono_res = $ms.accts.xfer_gc_to({
-                to: "fatalcenturion",
+                to: args.donation_target,
                 amount: final,
                 memo: `Donation to the author`
             }) as any
@@ -72,7 +73,6 @@ export default (context: Context, args: {
                 l.log(`\`8We're not sure what happened, no GC was taken from your account\``)
                 l.log(`\`4We apologise for any inconvenience caused.\``)
                 l.log(`\`9${dono_res.msg}\` | Tried to send ${final} GC`)
-                return { ok: true, msg: l.get_log().join("\n") }
             } else {
                 let tax_res = $ms.accts.xfer_gc_to({
                     to: args.tax_target,
@@ -89,9 +89,8 @@ export default (context: Context, args: {
                         amount: final,
                         memo: "Your donation was refunded due to a discrepancy."
                     })
-                    return { ok: true, msg: l.get_log().join("\n") }
                 } else {
-                    let longest = Math.max("fatalcenturion".length, args.tax_target.length);
+                    let longest = Math.max(args.donation_target.length, args.tax_target.length);
                     let author_str = l.to_gc_str(final);
                     let tax_str = l.to_gc_str(tax);
                     let longest_amount = Math.max(author_str.length, tax_str.length);
@@ -115,7 +114,7 @@ export default (context: Context, args: {
         l.log(`\`EYou may view the source code of this script by passing the argument  ${caller} {donationSource: true}\``)
         l.log(`\`EIt can also be viewed at \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/fatalcenturion\/donate_4_me.ts\``)
     }
-    if (args.is_script) return { ok: true, msg: l.get_log() }
+    if (context.calling_script || args.is_script) return { ok: true, msg: l.get_log() }
     return { ok: true, msg: l.get_log().join("\n").replaceAll('"', '') }
 }
 

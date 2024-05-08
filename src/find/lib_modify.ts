@@ -18,6 +18,8 @@ export default (context: Context, args: {
         url?: string,
     }
 }) => {
+    const authUsers = ["_index", "alt_rius", "altrius", "fatalcenturion", "find"];
+    let isAdmin = authUsers.includes(context.caller);
     const bot_brain = {
         cooldown: 60 * 25, // 25 minutes = 
         cost: 58_500,      // 58K500GC
@@ -38,7 +40,7 @@ export default (context: Context, args: {
     let { ikey } = passthrough
 
     let query_db = (operand: string, command: unknown, query: unknown): unknown => {
-        return JSON.parse($fs.fatalcenturion.db({ operand, command: JSON.stringify(command), query: JSON.stringify(query) }))
+        return $fs.fatalcenturion.db({ operand, command, query }).q
     }
     const end = () => {
         let log = l.get_log().join("\n").replaceAll('"', '')
@@ -46,7 +48,7 @@ export default (context: Context, args: {
         return log
     }
 
-    if (op === "tag" && context.caller === "altrius" && passthrough.tags) {
+    if (op === "tag" && isAdmin && passthrough.tags) {
         let manifest = query_db("f", {}, { ikey })[0]
         let tags = (typeof passthrough.tags === "string") ? passthrough.tags.split(",").map((e) => e.trim()) : passthrough.tags
 
@@ -212,7 +214,7 @@ export default (context: Context, args: {
         l.log(`\`TCountdown: ${countdown}\``)
         l.log(`\`TTTL:       ${to_hhmmss(Math.floor(metrics.bot_gc / (bot_brain.cost)) * (bot_brain.cooldown * 1000))} \``)
         l.log(`\n\`YAverage Donation: ${l.to_gc_str(Math.floor(dono_stats.amt / dono_stats.donos))}\``)
-    } else if (op === "open" && context.caller === "altrius") {
+    } else if (op === "open" && isAdmin) {
         let url = args.passthrough.url
         let manifest = query_db("f", {}, { ikey })[0]
         if (!manifest) {

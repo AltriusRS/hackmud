@@ -23,7 +23,7 @@ export default (context: Context, args: { mspt: number }) => {
     levels[3] = ["highsec", $fs.scripts.highsec()];
     levels[4] = ["fullsec", $fs.scripts.fullsec()];
     let sectors_added = 0;
-    let _metrics = $db.f({ key: "bot_brain_metrics" }).first_and_close() as any;
+    let _metrics = $db.f({ __metrics: true }).first_and_close() as any;
 
     // for each level, add all the sectors to the queue if they are not already in there
     for (let i = 0; i < levels.length; i++) {
@@ -81,7 +81,7 @@ export default (context: Context, args: { mspt: number }) => {
 
         for (let j = 0; j < scripts.length; j++) {
             let script = scripts[j];
-            $D("Adding script " + script + " to " + sector + " with level " + level);
+            // $D("Adding script " + script + " to " + sector + " with level " + level);
             $db.us({ __script: true, ikey: script.replaceAll(".", "#") }, {
                 $set: {
                     __script: true,
