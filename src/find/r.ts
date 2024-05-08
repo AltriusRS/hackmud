@@ -242,9 +242,18 @@ export default (context: Context, args: {
 	l.log(`\n\`6Want to support my work? Feeling generous?\`\n\`6Use find.donate {donate:<amount>} to thank me!\``)
 
 	// TODO dynamic donator list
+	let donations = query_db("f", {}, { __donation: true }, 5, { amount: -1 }) as any[];
+	if (donations) {
+		l.log(`\n\`6Thank you to the following donors:\``)
+		let donor_list = donations.map((d) => d.user)
+		let donor_amount = donations.map((d) => d.amount.toLocaleString())
+		let donor_name_length = Math.max(...donor_list.map((d) => d.length))
+		let donor_amount_length = Math.max(...donor_amount.map((d) => d.length))
+
+		donations.map((d) => l.log(`\n\`6${pad(d.user, donor_name_length, 1)} -\` \`Y${pad(d.amount.toLocaleString().split(",").join("`,`Y"), donor_amount_length, 1)}GC\``))
+	}
 	l.log("");
-	l.log("`YThank you to @chippiwillow for single-handedly`")
-	l.log("`Yfunding the project for multiple days with a donation of 10MGC`")
+	l.log("`YThank you to our donors for funding the project.`")
 	l.log("`YYour donation is being used for the good of the community!`")
 	$fs.chats.send({
 		channel: "0000",
@@ -269,8 +278,8 @@ function get_hhmmss(time: number) {
 	return `${hours < 10 ? "0" + hours : hours}:${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
 }
 
-function query_db(operand: string, command: unknown, query: unknown): unknown {
-	let response = $fs.fatalcenturion.db({ operand, command, query })
+function query_db(operand: string, command: unknown, query: unknown, limit?: number, sort?: unknown): unknown {
+	let response = $fs.fatalcenturion.db({ operand, command, query, limit, sort })
 	return response.q
 }
 

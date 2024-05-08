@@ -24,8 +24,8 @@ export default (context: Context, args: {
     const authUsers = ["_index", "alt_rius", "altrius", "fatalcenturion", "find"];
     let isAdmin = authUsers.includes(context.caller);
     const bot_brain = {
-        cooldown: 60 * 50, // 25 minutes = 
-        cost: 21e3,      // 58K500GC
+        cooldown: 60 * 15, // 25 minutes = 
+        cost: 40500,      // 58K500GC
     }
     const to_hhmmss = (time: number) => {
         time = time / 1000;
@@ -154,6 +154,15 @@ export default (context: Context, args: {
     } else if (op === "donate") {
         let amount = args.passthrough.amount;
         let stats = query_db("f", {}, { __metrics: true })[0]
+        let donor = query_db("f", {}, { __donation: true, user: context.caller })[0];
+        query_db("us", {
+            $set: {
+                __donation: true,
+                user: context.caller,
+                amount: (donor.amount ?? 0) + amount,
+            }
+        }, { __donation: true, user: context.caller })
+
         query_db("u1", {
             $set: {
                 donations: stats.donations + 1,
@@ -193,15 +202,7 @@ export default (context: Context, args: {
             if (k === "donation_sum") dono_stats.amt = v as number
             if (k === "donations") dono_stats.donos = v as number
             if (k === "last_scan") return null
-            if (k === "bot_gc") {
-                return {
-                    name: names[k],
-                    value: v,
-                    locale: l.to_gc_str(v as number),
-                    length: l.to_gc_str(v as number).length
-                }
-            }
-            if (k === "donation_sum") {
+            if (k === "bot_gc" || k === "donation_sum") {
                 return {
                     name: names[k],
                     value: v,

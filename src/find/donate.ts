@@ -5,7 +5,8 @@
  * @level MIDSEC
  */
 export default (context: Context, args: {
-    donate?: string | number, // The amount to donate to the cauase
+    donate?: string | number, // The amount to donate to the cause
+    amount?: string | number, // The amount to donate to the cause
     source?: boolean          // Whether to show the source code of the donation script
     donateSource?: boolean    // Whether to show the user the source code of the donation script
 }) => {
@@ -27,6 +28,8 @@ export default (context: Context, args: {
     // if the donationSource argument is present, process...
     if (args.donateSource) return $ms.find.lib_donate({ donate: 0, source: true, is_script: true });
 
+    if (args.amount) args.donate = args.amount
+
     if (args.donate) {
         // if the donate argument is present, process...
         let dono = $ms.find.lib_donate({
@@ -46,7 +49,7 @@ export default (context: Context, args: {
             l.log("the account to which a 5% donation is sent to. This is a normal part of the donation process")
             l.log("`FThank you for your donation!`")
             $fs.chats.tell({ to: "altrius", msg: "I just donated `2" + args.donate + "` to you and the wizMUD community" })
-            $fs.find.lib_modify({ op: "donate", passthrough: { amount: (typeof args.donate === "string") ? l.to_gc_num(args.donate) : args.donate } })
+            $fs.find.lib_modify({ op: "donate", passthrough: { amount: (typeof args.donate === "string") ? l.to_gc_num(args.donate.toUpperCase()) : args.donate } })
         }
         dono.msg.map((m) => l.log(m))
     }
