@@ -83,6 +83,8 @@ const TRUST = {
 const whitelist = new Set();
 whitelist.add("altrius#findr");
 whitelist.add("altrius#donate");
+whitelist.add("findr#r");
+whitelist.add("findr#donate");
 Object.keys(TRUST).forEach(k => whitelist.add(k));
 
 const cooldowns = new Map();
@@ -90,7 +92,7 @@ const cooldowns = new Map();
 const footer = [
     "",
     "Found a scam? Report it using",
-    "altrius.findr {report: \"some.script\"}",
+    "find.r {report: \"some.script\"}",
     "         `LAlways FULLSEC`",
     "`YScript Reports - Powered by Findr`",
     "     `YIn Search of Better`",
@@ -106,7 +108,7 @@ const ads = [
         "`o:+::+::+`  ",
         "`n+:+`            `2Did You Know?`",
         "`p:+:`     `8You can report scam scripts?`",
-        "`3+:+`  `8altrius.findr {report: \"some.script\"}`",
+        "`3+:+`    `8find.r {report: \"some.script\"}`",
         ""
     ],
     [
@@ -117,12 +119,11 @@ const ads = [
         "`o:+::+::+` ",
         "`n+:+`        `2Cant find that script?`",
         "`p:+:`  `8Use our powerful search to find it!`",
-        "`3+:+`     `8altrius.findr for more info`",
+        "`3+:+`         `8find.r for more info`",
         ""
     ]
 ]
 
-console.log();
 
 
 main();
@@ -138,15 +139,18 @@ async function main() {
     const hackmud = new HackmudApi(process.env.TOKEN);
     // await client.getToken("pass"); // otherwise get the token using the pass
     const account = await hackmud.getAccountData();
+    const user = account.getUserByName("find");
 
-    const adChannel = account.getUserByName("altrius").channels.filter(c => c.name === ads_channel)[0];
-    const scamAlertChannel = account.getUserByName("altrius").channels.filter(c => c.name === scam_alert_channel)[0];
+    const adChannel = user.channels.filter(c => c.name === ads_channel)[0];
+    const scamAlertChannel = user.channels.filter(c => c.name === scam_alert_channel)[0];
 
     console.log("Connecting to chat");
+    console.log("Logged in as", user.name)
     if (enable_ads) {
         console.log("Ads Enabled");
         adChannel.send(ads[0].join("\n"));
         setInterval(() => {
+            console.log("Sending ad");
             let random_ad = ads[Math.floor(Math.random() * ads.length)]
             adChannel.send(random_ad.join("\n"))
         }, ad_rate);
@@ -155,7 +159,7 @@ async function main() {
 
     account.poll(async (messages) => {
         messages.forEach(async (message) => {
-            // if (message.isOwnMessage()) return;
+            if (message.isOwnMessage()) return;
 
             // Extract the scripts from the message
             let contains_script = /([a-z]{1}[0-9a-z_]*\.[a-z]{1}[0-9a-z_]*)/ig.exec(message.msg);
