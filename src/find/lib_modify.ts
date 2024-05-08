@@ -16,6 +16,8 @@ export default (context: Context, args: {
         },
         amount?: number,
         url?: string,
+        usage?: string,
+        description?: string,
     }
 }) => {
     const authUsers = ["_index", "alt_rius", "altrius", "fatalcenturion", "find"];
@@ -233,6 +235,52 @@ export default (context: Context, args: {
             query_db("u1", {
                 $set: {
                     open: url,
+                    z: new Date().getTime(),
+                }
+            }, { ikey })
+        }
+    } else if (op === "description" && isAdmin) {
+        let description = args.passthrough.description
+        let manifest = query_db("f", {}, { ikey })[0]
+        if (!manifest) {
+            query_db("us", {
+                $set: {
+                    __script: true,
+                    ikey,
+                    level: "unknown",
+                    sector: "unknown",
+                    tags: [],
+                    reports: [],
+                    z: new Date().getTime(),
+                }
+            }, { ikey })
+        } else {
+            query_db("u1", {
+                $set: {
+                    description,
+                    z: new Date().getTime(),
+                }
+            }, { ikey })
+        }
+    } else if (op === "usage" && isAdmin) {
+        let usage = args.passthrough.usage
+        let manifest = query_db("f", {}, { ikey })[0]
+        if (!manifest) {
+            query_db("us", {
+                $set: {
+                    __script: true,
+                    ikey,
+                    level: "unknown",
+                    sector: "unknown",
+                    tags: [],
+                    reports: [],
+                    z: new Date().getTime(),
+                }
+            }, { ikey })
+        } else {
+            query_db("u1", {
+                $set: {
+                    usage,
                     z: new Date().getTime(),
                 }
             }, { ikey })

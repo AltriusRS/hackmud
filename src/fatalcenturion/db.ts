@@ -21,6 +21,8 @@ export default (context: Context, args: { operand: string, command: any, query: 
     let { operand, command, query } = args
 
     switch (operand) {
+        case "c":
+            return { ok: true, q: ($db.f(query, command).count_and_close()) }
         case "i":
             return { ok: true, q: ($db.i(query)) }
         case "u":

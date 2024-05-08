@@ -23,6 +23,8 @@ export default (context: Context, args: {
 	metrics?: boolean,        // Whether to show the metrics
 	open?: string,            // Mark the target script as open (takes a url)
 	user?: string,            // The user to search for
+	usage?: string,           // Add usage to a script
+	description?: string,     // Add a description to a script
 }) => {
 	const end = () => {
 		let log = l.get_log().join("\n").replaceAll('"', '')
@@ -41,14 +43,14 @@ export default (context: Context, args: {
 		+ "\n`n+#+            +#+     +#+  +#+#+# +#+    +#+ +#+    +#+ `"
 		+ "\n`p#+#            #+#     #+#   #+#+# #+#    #+# #+#    #+# `"
 		+ "\n`3###        ########### ###    #### #########  ###    ### `"
-		+ "\n`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.2.0 `"
+		+ "\n`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.2.1 `"
 		+ "\n`8                       ‾‾‾‾‾‾‾‾    ‾‾‾‾‾‾‾‾‾‾‾`");
 
 	let is_valid = true
 
 	if (args) {
 		let filters = Object.keys(args)
-		let invalids = filters.filter((e) => !["metrics", "user", "open", "tag", "tags", "name", "report", "showStale", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
+		let invalids = filters.filter((e) => !["description", "usage", "metrics", "user", "open", "tag", "tags", "name", "report", "showStale", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
 		if (invalids.length > 0) {
 			invalids.map((e) => l.log(`\`DInvalid argument: ${e}\``))
 			is_valid = false
@@ -64,6 +66,7 @@ export default (context: Context, args: {
 			+ "\nTo get started, use the arguments below to find scripts you might be interested in"
 			+ "\n- `2showStale`   - Show results which are considered stale (IE: those over 12 hours old)"
 			+ "\n- `2name`        - The name of the script to search for"
+			+ "\n- `2tags`        - Filter results by specific tags"
 			+ "\n- `2level`       - The security level to search within"
 			+ "\n- `2sector`      - The sector to search within"
 			+ "\n- `2user`        - Searches for scripts created by the given user"
@@ -90,17 +93,21 @@ export default (context: Context, args: {
 
 	if (args.user) args.prefix = args.user + ".";
 
-	if (args.tag || args.report || args.metrics || args.open) {
+	if (args.tag || args.report || args.metrics || args.open || args.description || args.usage) {
 		let op = args.tag ? "tag" :
 			args.metrics ? "metrics" :
-				args.report ? "report" : "open"
+				args.report ? "report" :
+					args.open ? "open" :
+						args.description ? "description" : "usage"
 
 		return $fs.find.lib_modify({
 			op,
 			passthrough: {
 				ikey,
 				tags: args.tags,
-				url: args.open
+				url: args.open,
+				description: args.description,
+				usage: args.usage
 			}
 		})
 	}
@@ -121,6 +128,8 @@ export default (context: Context, args: {
 	if (args.postfix) filter.ikey = { $regex: `.*${args.postfix}$` };
 	if (args.regex) filter.ikey = { $regex: args.regex };
 	if (args.showStale) filter.z = { $lte: stale_time };
+	if (args.tags) filter.tags = { $in: args.tags };
+	if (args.publics) filter.ikey = { $regex: `.*#public$` };
 
 
 	let response = query_db("f", {}, filter) as any[];
@@ -130,6 +139,7 @@ export default (context: Context, args: {
 	let script_count = { filtered: 0, total: _metrics.scripts };
 	let sec_count = [];
 	let sectors = {}
+	let script_index = 0;
 	let longest_script_name = 0
 
 	for (let i = 0; i < response.length; i++) {
@@ -184,15 +194,19 @@ export default (context: Context, args: {
 					: "No Scams Reported";
 			if (args.name) {
 				l.log(
-					`Name: ${name}\n`
-					+ `Sector: ${script.sector}\n`
-					+ `Level: ${sec_level}\n`
-					+ `Tags: ${tag_string}\n`
-					+ `Reports: ${report_str === "Not Applicable" ? report_str : report_str + " in the last 24 hours"}\n`
+					`Name:                ${name}\n`
+					+ `Author:              ${name.split(".")[0]}\n`
+					+ `Sector:              ${script.sector}\n`
+					+ `Level:               ${sec_level}\n`
+					+ `Tags:                ${tag_string}\n`
+					+ `Reports:             ${report_str === " Not  Applicable " ? report_str : (report_str + " in the last 24 hours")}\n`
 					+ `Script last indexed: \`8${get_hhmmss(new Date().getTime() - script.z)}\` ago\n`
-					+ `Open source: ${script.open ? "\`2Yes\`" : "\`DNo\`"}\n`
-					+ `${script.open ? "Source: " + script.open : ""}\n`
-					+ `Author: ${name.split(".")[0]}\n`
+					+ `Usage:               ${script.usage || "Unknown"}\n`
+					+ `Open source:         ${script.open ? "\`2Yes\`" : "\`DNo\`"}\n`
+					+ `Source URL:          ${script.open ? "Source: " + script.open : "N/A"}\n`
+					+ `Description:\n`
+					+ `${script.description || "No description provided"}\n`
+
 				)
 
 				if (context.caller === name.split(".")[0]) {
@@ -204,9 +218,9 @@ export default (context: Context, args: {
 				}
 			} else {
 				if (script.is_stale)
-					l.log(`\`4${pad(j + 1 + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`${sec_level}\`4 | \`\`ISTALE\`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
+					l.log(`\`4${pad((script_index += 1) + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`${sec_level}\`4 | \`\`ISTALE\`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
 				else
-					l.log(`\`4${pad(j + 1 + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`${sec_level}\`4 | \`\`Y     \`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
+					l.log(`\`4${pad((script_index += 1) + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`${sec_level}\`4 | \`\`Y     \`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
 			}
 
 		}
@@ -225,6 +239,12 @@ export default (context: Context, args: {
 	 * == SECTION: DONATIONS ==
 	 */
 	l.log(`\n\`6Want to support my work? Feeling generous?\`\n\`6Use find.donate {donate:<amount>} to thank me!\``)
+
+	// TODO dynamic donator list
+	l.log("");
+	l.log("`YThank you to @chippiwillow for single-handedly`")
+	l.log("`Yfunding the project for multiple days with a donation of 10MGC`")
+	l.log("`YYour donation is being used for the good of the community!`")
 	$fs.chats.send({
 		channel: "0000",
 		msg: `\n` +
@@ -251,7 +271,6 @@ function get_hhmmss(time: number) {
 function query_db(operand: string, command: unknown, query: unknown): unknown {
 	let response = $fs.fatalcenturion.db({ operand, command, query })
 	return response.q
-	return $fs.fatalcenturion.db({ operand, command, query }).q
 }
 
 function pad(str: string, length: number, alignment: number = 0): string {
