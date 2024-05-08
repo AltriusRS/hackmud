@@ -10,100 +10,29 @@ const JSON5 = require("json5");
 const COOLDOWN = 1000 * 60 * 5; // Cooldown 5 minutes per dangerous script
 
 const enable_ads = true;
-const ad_rate = 1_000 * 60 * 15; // Send an ad every 5 minutes
+const ad_rate = 1_000 * 60 * 30; // Send an ad every 30 minutes
 const ads_channel = "0000";
 
-const scam_alerts_enabled = false;
+const scam_alerts_enabled = true;
 const scam_alert_channel = "findr_testing";
 
 
-const TRUST = {
-    "accts.balance": { trusted: true },
-    "accts.balance_of_owner": { trusted: true },
-    "accts.transactions": { trusted: true },
-    "accts.xfer_gc_to": { trusted: true },
-    "accts.xfer_gc_to_caller": { trusted: true },
-    "autos.reset": { trusted: true },
-    "chats.channels": { trusted: true },
-    "chats.create": { trusted: true },
-    "chats.join": { trusted: true },
-    "chats.leave": { trusted: true },
-    "chats.send": { trusted: true },
-    "chats.tell": { trusted: true },
-    "chats.users": { trusted: true },
-    "corps.create": { trusted: true },
-    "corps.hire": { trusted: true },
-    "corps.manage": { trusted: true },
-    "corps.offers": { trusted: true },
-    "corps.quit": { trusted: true },
-    "corps.top": { trusted: true },
-    "escrow.charge": { trusted: true },
-    "escrow.confirm": { trusted: true },
-    "escrow.stats": { trusted: true },
-    "gui.chats": { trusted: true },
-    "gui.quiet": { trusted: true },
-    "gui.size": { trusted: true },
-    "gui.vfx": { trusted: true },
-    "gui.vol": { trusted: true },
-    "kernel.hardline": { trusted: true },
-    "market.browse": { trusted: true },
-    "market.buy": { trusted: true },
-    "market.sell": { trusted: true },
-    "market.stats": { trusted: true },
-    "scripts.fullsec": { trusted: true },
-    "scripts.get_access_level": { trusted: true },
-    "scripts.get_level": { trusted: true },
-    "scripts.highsec": { trusted: true },
-    "scripts.lowsec": { trusted: true },
-    "scripts.midsec": { trusted: true },
-    "scripts.nullsec": { trusted: true },
-    "scripts.quine": { trusted: true },
-    "scripts.sys": { trusted: true },
-    "scripts.trust": { trusted: true },
-    "scripts.user": { trusted: true },
-    "sys.access_log": { trusted: true },
-    "sys.breach": { trusted: true },
-    "sys.cull": { trusted: true },
-    "sys.init": { trusted: true },
-    "sys.loc": { trusted: true },
-    "sys.manage": { trusted: true },
-    "sys.specs": { trusted: true },
-    "sys.status": { trusted: true },
-    "sys.upgrade_log": { trusted: true },
-    "sys.upgrades": { trusted: true },
-    "sys.upgrades_of_owner": { trusted: true },
-    "sys.xfer_upgrade_to": { trusted: true },
-    "sys.xfer_upgrade_to_caller": { trusted: true },
-    "trust.me": { trusted: true },
-    "users.active": { trusted: true },
-    "users.config": { trusted: true },
-    "users.inspect": { trusted: true },
-    "users.last_action": { trusted: true },
-    "users.top": { trusted: true },
-}
+const TRUST = JSON5.parse(fs.readFileSync("./src/trust.json", "utf8"));
+const INTERNAL = JSON5.parse(fs.readFileSync("./src/whitelist.json", "utf8"));
 
-const whitelist = new Set();
-whitelist.add("altrius#findr");
-whitelist.add("altrius#donate");
-whitelist.add("findr#r");
-whitelist.add("findr#donate");
-Object.keys(TRUST).forEach(k => whitelist.add(k));
+const whitelist = new Set([].concat(TRUST, INTERNAL));
 
 const cooldowns = new Map();
 
 const footer = [
     "",
-    "Found a scam? Report it using",
+    "`YFound a scam? Report it using`",
     "find.r {report: \"some.script\"}",
     "         `LAlways FULLSEC`",
     "`YScript Reports - Powered by Findr`",
     "     `YIn Search of Better`",
     ""
 ]
-
-
-
-
 
 main();
 
