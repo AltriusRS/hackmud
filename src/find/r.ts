@@ -81,7 +81,7 @@ export default (context: Context, args: {
 			+ "\n`5- The order of execution is as listed above`"
 			+ "\n"
 			+ "\nIf you wish to verify the source code of this script. You may find it at "
-			+ "\nhttps:\/\/github\.com/altriusrs/hackmud/"
+			+ "\n`4Donations: ``3https:\/\/git\.archimedia\.uk\/altrius\/hackmud\/`"
 			+ `\nDue to space constraints, this script is obfuscated in game.`)
 		return end()
 	}

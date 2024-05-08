@@ -55,9 +55,8 @@ export default (context: Context, args: {
     if (Object.keys(args).length === 0) {
         l.log(`\`4This script is here to provide a quick and easy way to donate to me.\``)
         l.log(`\`4It is a MIDSEC script, and is called internally.\``)
-        l.log(`\`4The donation script internally calls a library which I wrote, both can be located at the links below\``)
-        l.log(`\`4Donations: \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/find\/donate.ts\``)
-        l.log(`\`4Library: \`\`3https:\/\/github\.com\/altriusrs\/hackmud\/blob\/main\/src\/find\/lib_donate.ts\``)
+        l.log(`\`4The donation script internally calls a library which I wrote, both can be located at the link below\``)
+        l.log(`\`4Donations: \`\`3https:\/\/git\.archimedia\.uk\/altrius\/hackmud\/\``)
         l.log("The source code for this script is obfuscated on here, but can be accessed using arguments listed below")
         l.log("To view the source code of this script, use the argument { source: true }")
         l.log("To view the source code of the donation library, use the argument { donationSource: true }")
