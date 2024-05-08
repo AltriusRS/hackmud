@@ -23,8 +23,8 @@ export default (context: Context, args: {
     const authUsers = ["_index", "alt_rius", "altrius", "fatalcenturion", "find"];
     let isAdmin = authUsers.includes(context.caller);
     const bot_brain = {
-        cooldown: 60 * 25, // 25 minutes = 
-        cost: 58_500,      // 58K500GC
+        cooldown: 60 * 50, // 25 minutes = 
+        cost: 21e3,      // 58K500GC
     }
     const to_hhmmss = (time: number) => {
         time = time / 1000;
@@ -172,9 +172,9 @@ export default (context: Context, args: {
         let last_scan = new Date(metrics.last_scan as number);
 
         // Add the cooldown to the previous scan
-        let next_scan = new Date(last_scan.getTime() + bot_brain.cooldown);
-        let difference = next_scan.getTime() - new Date().getTime();
-        let countdown = to_hhmmss(difference);
+        let next_scan = new Date(last_scan.getTime() + (bot_brain.cooldown)*1000);
+        let difference = next_scan.getTime() - new Date().getTime()
+        let countdown = to_hhmmss(Math.abs(difference))
         let stats = Object.entries(metrics).map(([k, v]) => {
             if (!v) v = 0
             if (k === "donation_sum") dono_stats.amt = v as number
@@ -213,7 +213,7 @@ export default (context: Context, args: {
         });
         l.log(`\`TLast Scan: ${last_scan.toUTCString()}\``)
         l.log(`\`TNext Scan: ${next_scan.toUTCString()}\``)
-        l.log(`\`TCountdown: ${countdown}\``)
+        l.log(`\`TCountdown:\` ${countdown}`)
         l.log(`\`TTTL:       ${to_hhmmss(Math.floor(metrics.bot_gc / (bot_brain.cost)) * (bot_brain.cooldown * 1000))} \``)
         l.log(`\n\`YAverage Donation: ${l.to_gc_str(Math.floor(dono_stats.amt / dono_stats.donos))}\``)
     } else if (op === "open" && isAdmin) {
