@@ -36,7 +36,9 @@ export default (context: Context, args: {
         let minutes = Math.floor(time / 60);
         time -= minutes * 60;
         let seconds = Math.floor(time);
-        return `${days < 10 ? "0" + days : days}:${hours < 10 ? "0" + hours : hours}:${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+        if(days > 0) return `${days < 10 ? "0" + days : days}:${hours < 10 ? "0" + hours : hours}:${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+        if(hours > 0) return `${hours < 10 ? "0" + hours : hours}:${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+        return `${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
     }
     const l = $fs.scripts.lib()
     let { op, passthrough } = args as any
@@ -180,7 +182,8 @@ export default (context: Context, args: {
             "bot_gc": "Bot Brain GC",
             "donations": "Donations",
             "donation_sum": "Donation Sum",
-            "last_scan": "Last Scan"
+            "last_scan": "Last Scan",
+            "sectors_scanned": "Sectors Per Scan"
         };
 
 
@@ -202,6 +205,30 @@ export default (context: Context, args: {
             if (k === "donation_sum") dono_stats.amt = v as number
             if (k === "donations") dono_stats.donos = v as number
             if (k === "last_scan") return null
+            if (k === "sectors_scanned") {
+                let v2 = v as number[]
+                let total = v2.reduce((a, b) => a + b, 0);
+                let average = Math.floor(total / (v2.length ?? 1))
+                let per_hour = average * (3600 / bot_brain.cooldown);
+                let per_day = per_hour * 24;
+                let queue_cycle = (metrics.sectors / per_hour)
+                let queue_string = queue_cycle.toFixed(2);
+                let [whole, decimal] = queue_string.split(".");
+                let queue_cycle_decimal = decimal ? decimal.length : 0;
+                if (queue_cycle_decimal < 75) queue_string = `${whole}.75`;
+                if (queue_cycle_decimal < 50) queue_string = `${whole}.50`;
+                if (queue_cycle_decimal < 25) queue_string = `${whole}.25`;
+
+                queue_cycle = parseFloat(queue_string);
+
+                let text = `${average.toLocaleString()} per scan | ${(average * (3600 / bot_brain.cooldown)).toLocaleString()} per hour | Queue Cycle: ${to_hhmmss(queue_cycle* 3600 * 1000)} `
+                return {
+                    name: names[k],
+                    value: text,
+                    locale: text,
+                    length: 0
+                }
+            }
             if (k === "bot_gc" || k === "donation_sum") {
                 return {
                     name: names[k],

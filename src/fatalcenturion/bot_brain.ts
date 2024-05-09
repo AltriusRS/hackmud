@@ -3,10 +3,8 @@
  * @description A utility script designed to locate things for people
  * CAUTION: EARLY ACCESS
  */
-export default (context: Context, args: { mspt: number }) => {
-    // allow the user to override the default number of sectors per trigger
-    if (!args) args = { mspt: 5 };
-    const MAX_SECTORS_PER_TRIGGER = args.mspt;
+export default (context: Context, args: {}) => {
+    let _START = Date.now();
     // get the queue
     let queue = $db.f({ key: "bot_queue" }).first_and_close() as { _id: unknown, key: string, sectors: any[] };
 
@@ -26,7 +24,7 @@ export default (context: Context, args: { mspt: number }) => {
         let [level, sectors] = levels[i];
 
         // filter out sectors which are invalid
-        sectors = sectors.filter((e) => /([A-Z]+_){2}\d/.exec(e));
+        // sectors = sectors.filter((e) => /([A-Z]+_){2}\d/.exec(e));
 
         // add sectors to the queue only if they are not already in the queue
         sectors = sectors.filter((sector) => !queue.sectors.find((s) => s.sector === sector));
@@ -36,25 +34,17 @@ export default (context: Context, args: { mspt: number }) => {
     }
     _metrics.sectors += sectors_added;
 
-    // take the first MAX_SECTORS_PER_TRIGGER from the queue
-    let thisRun = queue.sectors.slice(0, MAX_SECTORS_PER_TRIGGER).map((s) => {
-        return {
-            ...s,
-            last_triggered: new Date(),
-        }
-    });
-    let nextRun = queue.sectors.slice(MAX_SECTORS_PER_TRIGGER + 1);
-    queue.sectors = [].concat(nextRun, thisRun);
-    $db.us({ key: "bot_queue" }, {
-        $set: queue as any,
-    });
-
-
     let scripts_added = 0;
+    let sectors_scanned = 0;
 
-    for (let i = 0; i < thisRun.length; i++) {
+    for (let i = 0; i < queue.sectors.length; i++) {
+        if (Date.now() - _START > 4200) break;
+        let s = queue.sectors.shift();
+        s.last_triggered = new Date();
+        queue.sectors.push(s);
+        sectors_scanned++;
         let scripts = [];
-        let { sector, level } = thisRun[i];
+        let { sector, level } = s;
         $ms.chats.join({ channel: sector });
         switch (level) {
             case "nullsec":
@@ -77,7 +67,7 @@ export default (context: Context, args: { mspt: number }) => {
 
         for (let j = 0; j < scripts.length; j++) {
             let script = scripts[j];
-            
+
             let manifest = $db.f({ __script: true, ikey: script.replaceAll(".", "#") }).first_and_close();
             if (!manifest) scripts_added++;
             $db.us({ __script: true, ikey: script.replaceAll(".", "#") }, {
@@ -96,15 +86,24 @@ export default (context: Context, args: { mspt: number }) => {
     let total = $db.f({ __script: true }).count_and_close();
     _metrics.scripts = total;
 
+    $db.u1({ key: "bot_queue" }, {
+        $set: queue as any,
+    });
+
+    if (!_metrics.sectors_scanned) _metrics.sectors_scanned = [];
+    if (_metrics.sectors_scanned.length > (96)) _metrics.sectors_scanned.shift();
+    _metrics.sectors_scanned.push(sectors_scanned);
+
     $db.u1({ __metrics: true }, {
         $set: {
             scripts: total,
             sectors: queue.sectors.length,
             last_scan: new Date().getTime(),
-            bot_gc: $fs.accts.balance_of_owner()
+            bot_gc: $fs.accts.balance_of_owner(),
+            sectors_scanned: _metrics.sectors_scanned,
         }
     });
 
-    $hs.chats.tell({ to: "altrius", msg: "Added " + sectors_added + " sectors\nAdded " + scripts_added + " scripts\nI'm finished" });
-    return { ok: true, msg: "[Bot Brain] complete" };
+    $fs.chats.tell({ to: "altrius", msg: "Added " + sectors_added + " sectors\nAdded " + scripts_added + " scripts\nScanned " + sectors_scanned + " sectors\nI'm finished" });
+    return { ok: true, msg: "Added " + sectors_added + " sectors\nAdded " + scripts_added + " scripts\nScanned " + sectors_scanned + " sectors\n[Bot Brain] complete" };
 }

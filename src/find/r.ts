@@ -326,8 +326,8 @@ function get_hhmmss(time: number) {
 	return `${hours < 10 ? "0" + hours : hours}:${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
 }
 
-function query_db(operand: string, command: unknown, query: unknown, limit?: number, sort?: unknown): unknown {
-	let response = $fs.fatalcenturion.db({ operand, command, query, limit, sort })
+function query_db(operand: string, command: unknown, query: unknown, limit?: number, sort?: unknown, page?: number): unknown {
+	let response = $fs.fatalcenturion.db({ operand, command, query, limit, sort, page })
 	return response.q
 }
 
