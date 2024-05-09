@@ -27,6 +27,8 @@ export default (context: Context, args: {
 	description?: string,     // Add a description to a script
 	corpsOnly?: boolean,      // Only show scripts which are known to be npc corps
 	gibson?: boolean,         // Only show gibson scripts
+	limit?: number,           // The number of results to show
+	page?: number,            // The page to show
 }) => {
 	const end = () => {
 		let log = l.get_log().join("\n").replaceAll('"', '')
@@ -45,14 +47,14 @@ export default (context: Context, args: {
 		+ "\n`n+#+            +#+     +#+  +#+#+# +#+    +#+ +#+    +#+ `"
 		+ "\n`p#+#            #+#     #+#   #+#+# #+#    #+# #+#    #+# `"
 		+ "\n`3###        ########### ###    #### #########  ###    ### `"
-		+ "\n`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.2.1 `"
-		+ "\n`8                       ‾‾‾‾‾‾‾‾    ‾‾‾‾‾‾‾‾‾‾‾`");
+		+ "\n`NWritten by Altrius`                         `YVersion 1.0.0 `"
+		+ "\n");
 
 	let is_valid = true
 
 	if (args) {
 		let filters = Object.keys(args)
-		let invalids = filters.filter((e) => !["gibson", "corpsOnly", "description", "usage", "metrics", "user", "open", "tag", "tags", "name", "report", "showStale", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
+		let invalids = filters.filter((e) => !["limit", "page", "gibson", "corpsOnly", "description", "usage", "metrics", "user", "open", "tag", "tags", "name", "report", "showStale", "level", "sector", "publics", "prefix", "postfix", "regex"].includes(e))
 		if (invalids.length > 0) {
 			invalids.map((e) => l.log(`\`DInvalid argument: ${e}\``))
 			is_valid = false
@@ -83,6 +85,8 @@ export default (context: Context, args: {
 			+ "\n              > play around with the regex tester at https:\/\/regex101.com\/"
 			+ "\n              > For example, to find all scripts containing a number use the argument `2[0-9]`"
 			+ "\n- `2gibson`   - Show only the gibson scripts"
+			+ "\n- `2limit`       - The number of results to show (defaults to 20)"
+			+ "\n- `2page`        - The page to show (defaults to 1)"
 			+ "\n"
 			+ "\n`5ORDER OF EXECUTION:`"
 			+ "\n`5- The order of execution is as listed above`"
@@ -142,8 +146,25 @@ export default (context: Context, args: {
 	if (args.showStale) filter.z = { $lte: stale_time };
 	if (args.tags) filter.tags = { $in: args.tags };
 
+	if (args.limit > 100) {
+		args.limit = 100
+		l.log("[`DWARNING`] The argument '`Nlimit`' cannot be more than 100")
+		l.log("[ `4INFO`  ] For more results, use the argument `Npage` to view the next page")
+	}
+	if (args.limit < 1) {
+		args.limit = 20
+		l.log("[`DWARNING`] The argument '`Nlimit`' cannot be less than 1")
+	}
+	if (!args.limit) args.limit = 20
+	if (!args.page) args.page = 1
 
-	let response = query_db("f", {}, filter) as any[];
+
+
+	let response = query_db("f", {}, filter, args.limit, undefined, args.page) as any[];
+	let matches = query_db("c", {}, filter) as number;
+	let total_pages = Math.ceil(matches / args.limit);
+	let next_page = args.page + 1;
+
 	let _metrics = query_db("f", {}, { __metrics: true })[0];
 
 	let sector_count = { filtered: 0, total: _metrics.sectors };
@@ -192,6 +213,39 @@ export default (context: Context, args: {
 				break;
 		}
 
+		if (sector_info.length === 1 && sector.scripts.length === 1) {
+			let script = sector.scripts[0];
+			let name = script.ikey.replace("#", ".");
+			let tag_string = script.tags.length > 0 ? script.tags.map((e) => e.split(" ").map((f) => f.charAt(0).toUpperCase() + f.slice(1)).join(" ")).join(", ") : "No Tags";
+			let report_str = script.reports.length > 0 ? script.reports.length > 1 ? `\`E${script.reports.length} Scam Reports\``
+				: `\`E${script.reports.length} Scam Report\``
+				: "No Scams Reported";
+
+			l.log(
+				`Name:                ${name}\n`
+				+ `Author:              ${name.split(".")[0]}\n`
+				+ `Sector:              ${script.sector}\n`
+				+ `Level:               ${sec_level}\n`
+				+ `Tags:                ${tag_string}\n`
+				+ `Reports:             ${script.level === "fullsec" ? "Not Applicable" : (report_str + " in the last 24 hours")}\n`
+				+ `Script last indexed: \`8${get_hhmmss(new Date().getTime() - script.z)}\` ago\n`
+				+ `Usage:               ${script.usage || "Unknown"}\n`
+				+ `Open source:         ${script.open ? "\`2Yes\`" : "\`DNo\`"}\n`
+				+ `Source URL:          ${script.open ? "Source: " + script.open : "N/A"}\n`
+				+ `Description:\n`
+				+ `${script.description || "No description provided"}\n`
+
+			)
+
+			if (context.caller === name.split(".")[0]) {
+				l.log("`YYou are the author of this script`\n"
+					+ "`7If you wish to modify the listing, please contact ``G@altrius_codes``8 on discord`\n"
+					+ "`7If your script is open source, please send me a link to the code, so I may add it to the database`\n"
+					+ "`7Please understand that scam reports will not be modified unless proof of abuse is provided`"
+				)
+			}
+		}
+
 		for (let j = 0; j < sector.scripts.length; j++) {
 			let script = sector.scripts[j]
 			if (!script.reports) script.reports = [];
@@ -200,49 +254,33 @@ export default (context: Context, args: {
 			let name = script.ikey.replace("#", ".");
 			// join and capitalize the first letter of each word
 			let tag_string = script.tags.length > 0 ? script.tags.map((e) => e.split(" ").map((f) => f.charAt(0).toUpperCase() + f.slice(1)).join(" ")).join(", ") : "No Tags";
-			let report_str = script.level === "fullsec" ? " Not  Applicable " :
-				script.reports.length > 0 ? script.reports.length > 1 ? `\`E${script.reports.length} Scam Reports\``
-					: `\`E${script.reports.length} Scam Report\``
-					: "No Scams Reported";
-			if (args.name) {
-				l.log(
-					`Name:                ${name}\n`
-					+ `Author:              ${name.split(".")[0]}\n`
-					+ `Sector:              ${script.sector}\n`
-					+ `Level:               ${sec_level}\n`
-					+ `Tags:                ${tag_string}\n`
-					+ `Reports:             ${report_str === " Not  Applicable " ? report_str : (report_str + " in the last 24 hours")}\n`
-					+ `Script last indexed: \`8${get_hhmmss(new Date().getTime() - script.z)}\` ago\n`
-					+ `Usage:               ${script.usage || "Unknown"}\n`
-					+ `Open source:         ${script.open ? "\`2Yes\`" : "\`DNo\`"}\n`
-					+ `Source URL:          ${script.open ? "Source: " + script.open : "N/A"}\n`
-					+ `Description:\n`
-					+ `${script.description || "No description provided"}\n`
+			let report_str = script.reports.length > 0 ? script.reports.length > 1 ? `\`E${script.reports.length} Scam Reports\``
+				: `\`E${script.reports.length} Scam Report\``
+				: "No Scams Reported";
 
-				)
+			// If there is only one script returned by the query, show the detailed information view
+			if (args.name || sector.scripts.length === 1 && sector_info.length === 1) {
 
-				if (context.caller === name.split(".")[0]) {
-					l.log("`YYou are the author of this script`\n"
-						+ "`7If you wish to modify the listing, please contact ``G@altrius_codes``8 on discord`\n"
-						+ "`7If your script is open source, please send me a link to the code, so I may add it to the database`\n"
-						+ "`7Please understand that scam reports will not be modified unless proof of abuse is provided`"
-					)
-				}
 			} else {
 				if (script.is_stale)
-					l.log(`\`4${pad((script_index += 1) + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`${sec_level}\`4 | \`\`ISTALE\`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
+					l.log(`\`4${pad((script_index += 1) + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`${sec_level}\`4 | \`\`ISTALE\`\`4 | \`${script.sec_level === "fullsec" ? " Not  Applicable " : report_str}\`4 | \`\`8${tag_string}\``);
 				else
-					l.log(`\`4${pad((script_index += 1) + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`${sec_level}\`4 | \`\`Y     \`\`4 | \`${report_str}\`4 | \`\`8${tag_string}\``);
+					l.log(`\`4${pad((script_index += 1) + "", 4, 0)} - ${pad(name, longest_script_name, 1)}\`\`4 | \`${sec_level}\`4 | \`\`Y     \`\`4 | \`${script.sec_level === "fullsec" ? " Not  Applicable " : report_str}\`4 | \`\`8${tag_string}\``);
 			}
 
 		}
 	}
 
 	let duration = new Date().getTime() - instant;
+	// If the next page is the last page, show a special message
+	if (next_page > total_pages) l.log(`\n\`2Showing the last of ${total_pages} pages\``);
+	else l.log(`\n\`2Showing page ${args.page} of ${total_pages}\` - \`Npage\`:${next_page} for more`);
+
+
 	l.log(`\n\`YShowing ${sector_count.filtered} of ${sector_count.total} sectors\`\n`
 		+ `\`YShowing ${script_count.filtered} of ${script_count.total} scripts\`\n`
 		+ `\`YSearch took ${duration} milliseconds to complete\`\n`
-		+ `Can't find what you're looking for? Use the argument\n`
+		+ `\nCan't find what you're looking for? Use the argument\n`
 		+ `{ showStale: true } to show results which are stale`)
 
 	$fs.find.lib_modify({ op: "search", passthrough: { stats: { scripts: script_count.filtered, sectors: sector_count.filtered } } })
