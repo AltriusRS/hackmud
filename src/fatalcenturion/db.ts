@@ -3,7 +3,7 @@
  * @description A db management script designed to query the db for a third party script
  * CAUTION: EARLY ACCESS
  */
-export default (context: Context, args: { operand: string, command: any, query: any, limit?: number, sort?: any }) => {
+export default (context: Context, args: { operand: string, command: any, query: any, limit?: number, sort?: any, page?: number }) => {
     const authUsers = ["_index", "alt_rius", "altrius", "fatalcenturion", "find"];
     let check_bypass = authUsers.includes(context.caller);
     if (!check_bypass) {
@@ -18,7 +18,7 @@ export default (context: Context, args: { operand: string, command: any, query: 
         }
     }
 
-    let { operand, command, query, limit, sort } = args
+    let { operand, command, query, limit, sort, page } = args
 
     switch (operand) {
         case "c":
@@ -34,6 +34,7 @@ export default (context: Context, args: { operand: string, command: any, query: 
         case "f":
             let q = $db.f(query, command);
             if (sort) q = q.sort(sort);
+            if (page) q = q.skip((page - 1) * limit);
             if (limit) q = q.limit(limit);
             return { ok: true, q: (q.array_and_close()) }
         case "r":
