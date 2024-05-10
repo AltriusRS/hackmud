@@ -48,7 +48,6 @@ export default (context: Context, args: {
             l.log("handling the transaction. You may also see the user `2wiz` in your transactions. This is")
             l.log("the account to which a 5% donation is sent to. This is a normal part of the donation process")
             l.log("`FThank you for your donation!`")
-            $fs.chats.tell({ to: "altrius", msg: "I just donated `2" + args.donate + "` to you and the wizMUD community" })
             $fs.find.lib_modify({ op: "donate", passthrough: { amount: (typeof args.donate === "string") ? l.to_gc_num(args.donate.toUpperCase()) : args.donate } })
         }
         dono.msg.map((m) => l.log(m))

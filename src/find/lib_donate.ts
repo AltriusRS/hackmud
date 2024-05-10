@@ -94,7 +94,7 @@ export default (context: Context, args: {
                     let author_str = l.to_gc_str(final);
                     let tax_str = l.to_gc_str(tax);
                     let longest_amount = Math.max(author_str.length, tax_str.length);
-                    $fs.chats.tell({ to: "altrius", msg: `Someone just donated ${author_str}GC to you and ${tax_str}GC to ${args.tax_target}` })
+                    $fs.chats.tell({ to: "altrius", msg: `Someone just donated ${author_str} to you and ${tax_str} to ${args.tax_target}` })
                     l.log(``)
                     l.log(`\`2Donation Successful\``)
                     l.log(`\`8- To ${pad("fatalcenturion", longest)}: ${pad(author_str, longest_amount)}\``)
