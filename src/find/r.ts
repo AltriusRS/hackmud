@@ -30,6 +30,8 @@ export default (context: Context, args: {
 	limit?: number,           // The number of results to show
 	page?: number,            // The page to show
 }) => {
+  var START_STACK = new Error();
+  try {
 	const end = () => {
 		let log = l.get_log().join("\n").replaceAll('"', '')
 		// $D(log)
@@ -314,6 +316,14 @@ export default (context: Context, args: {
 			"`YFindr - In Search of Better`"
 	})
 	return end()
+  } catch (e) {
+    return {
+      ok: false,
+      start: START_STACK.stack,
+      now: e.stack,
+      message: e.message
+    }
+  }
 }
 
 function get_hhmmss(time: number) {
