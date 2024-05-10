@@ -8,7 +8,11 @@
 		"forceConsistentCasingInFileNames": true,
 		"target": "ESNext",
 		"skipLibCheck": true,
-		"lib": [ "ES2022" ],
-		"types": [ "hackmud-script-manager/env" ]
+		"lib": [
+			"ES2022"
+		],
+		"types": [
+			"hackmud-script-manager/env"
+		]
 	}
 }

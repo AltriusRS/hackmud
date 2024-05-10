@@ -8,7 +8,7 @@ type Scriptor = { name: string, call: () => unknown }
 export default (context: Context, args: { t: Scriptor }) => {
     const l = $fs.scripts.lib()
 
-    let outcome = args.t.call();
+    const outcome = args.t.call();
     $D(`Outcome: ${outcome}`);
     
         // $D(`Cracking ${args.t.name}`)

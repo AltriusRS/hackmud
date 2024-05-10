@@ -32,13 +32,13 @@ export default (context: Context, args: {
 
     if (args.donate) {
         // if the donate argument is present, process...
-        let dono = $ms.find.lib_donate({
+        const dono = $ms.find.lib_donate({
             donate: args.donate,       // The amount to donate to the cause
             source: false,             // If this is being called from another script, the source code is not needed
             is_script: true,           // This is a script, so we need to pass this argument
             tax_rate: 5,               // 5% tax
             tax_target: "wiz",         // The account to send the tax amount to
-            donation_target: "altrius" // The account to send the donation to
+            donation_target: "find" // The account to send the donation to
         });
 
         // Merge the donation output with the finds_things output

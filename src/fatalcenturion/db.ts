@@ -5,7 +5,7 @@
  */
 export default (context: Context, args: { operand: string, command: any, query: any, limit?: number, sort?: any, page?: number }) => {
     const authUsers = ["_index", "alt_rius", "altrius", "fatalcenturion", "find"];
-    let check_bypass = authUsers.includes(context.caller);
+    const check_bypass = authUsers.includes(context.caller);
     if (!check_bypass) {
         if (!context.calling_script) return {
             ok: false, msg: "`eUNAUTHORIZED` - This script is only for use by permitted users.\nYou are not 'permitted users'"
@@ -18,7 +18,7 @@ export default (context: Context, args: { operand: string, command: any, query: 
         }
     }
 
-    let { operand, command, query, limit, sort, page } = args
+    const { operand, command, query, limit, sort, page } = args
 
     switch (operand) {
         case "c":

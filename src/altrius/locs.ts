@@ -8,22 +8,20 @@ type Scriptor = { name: string, call: (args: any) => unknown }
 export default (context: Context, args: { t: Scriptor, confirm?: boolean, rank: string, class: string }) => {
   const l = $fs.scripts.lib();
 
-  const end = () => {
-    return l.get_log().map((s) => s.replaceAll(/^"|"$/g, '')).join("\n");
-  }
 
-  let result = $fs.ast.t2_scraper({ t: args.t });
-  let locs = result;
 
-  let locStrings = [];
+  const result = $fs.ast.t2_scraper({ t: args.t });
+  const locs = result;
+
+  const locStrings = [];
 
   for (let i = 0; i < locs.length; i++) {
-    let name = locs[i];
-    let [prefix, datablock, ...suffix] = name.split("_");
+    const name = locs[i];
+    const [prefix, datablock, ...suffix] = name.split("_");
     let loc_rank = 'Junkrack';
     let loc_class = 'Architect';
-    let rank_str = datablock.substring(0, 2);
-    let class_str = datablock.substring(2, 5);
+    const rank_str = datablock.substring(0, 2);
+    const class_str = datablock.substring(2, 5);
     switch (rank_str) {
       case 'jr': loc_rank = 'junkrack'; break;
       case 'dd': loc_rank = 'diggerdeck'; break;
@@ -51,7 +49,7 @@ export default (context: Context, args: { t: Scriptor, confirm?: boolean, rank: 
   }
 
 
-  let text = l.columnize(locStrings);
+  const text = l.columnize(locStrings);
   $D(text);
 
   // //let outcome = args.t.call();
@@ -103,6 +101,3 @@ export default (context: Context, args: { t: Scriptor, confirm?: boolean, rank: 
 }
 
 
-function query_db(operand: string, command: unknown, query: unknown): unknown {
-  return $fs.fatalcenturion.db({ operand, command, query }).q;
-}

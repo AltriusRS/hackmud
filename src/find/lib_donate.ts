@@ -30,12 +30,12 @@ export default (context: Context, args: {
     const l = $fs.scripts.lib()
     // if the user wishes to donate, this is where we process that information
     if (args.donate) {
-        let balance = $hs.accts.balance({ is_script: true })
+        const balance = $hs.accts.balance({ is_script: true })
         let donation = -1;
 
         // if the donation was provided as a string, convert to number, or do nothing
         if (typeof args.donate !== "number") {
-            let donation_num = l.to_gc_num(args.donate);
+            const donation_num = l.to_gc_num(args.donate);
             if (typeof donation_num !== "number") {
                 l.log(``)
                 l.log(`\t\`DDonation Failed - Invalid Amount\``)
@@ -59,10 +59,10 @@ export default (context: Context, args: {
             l.log(`\t\`4We apologise for any inconvenience caused.\``)
         } else {
             // calculate a value to send to the donation cause based on a percentage
-            let tax = Math.floor(Math.abs(donation * (args.tax_rate / 100))); // 5% tax
-            let final = donation - tax; // donation minus tax
+            const tax = Math.floor(Math.abs(donation * (args.tax_rate / 100))); // 5% tax
+            const final = donation - tax; // donation minus tax
 
-            let dono_res = $ms.accts.xfer_gc_to({
+            const dono_res = $ms.accts.xfer_gc_to({
                 to: args.donation_target,
                 amount: final,
                 memo: `Donation to the author`
@@ -74,7 +74,7 @@ export default (context: Context, args: {
                 l.log(`\`4We apologise for any inconvenience caused.\``)
                 l.log(`\`9${dono_res.msg}\` | Tried to send ${final} GC`)
             } else {
-                let tax_res = $ms.accts.xfer_gc_to({
+                const tax_res = $ms.accts.xfer_gc_to({
                     to: args.tax_target,
                     amount: tax,
                     memo: `Donation to ${args.tax_target}`,
@@ -90,10 +90,10 @@ export default (context: Context, args: {
                         memo: "Your donation was refunded due to a discrepancy."
                     })
                 } else {
-                    let longest = Math.max(args.donation_target.length, args.tax_target.length);
-                    let author_str = l.to_gc_str(final);
-                    let tax_str = l.to_gc_str(tax);
-                    let longest_amount = Math.max(author_str.length, tax_str.length);
+                    const longest = Math.max(args.donation_target.length, args.tax_target.length);
+                    const author_str = l.to_gc_str(final);
+                    const tax_str = l.to_gc_str(tax);
+                    const longest_amount = Math.max(author_str.length, tax_str.length);
                     $fs.chats.tell({ to: "altrius", msg: `Someone just donated ${author_str} to you and ${tax_str} to ${args.tax_target}` })
                     l.log(``)
                     l.log(`\`2Donation Successful\``)

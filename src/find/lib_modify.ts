@@ -22,29 +22,29 @@ export default (context: Context, args: {
     }
 }) => {
     const authUsers = ["_index", "alt_rius", "altrius", "fatalcenturion", "find"];
-    let isAdmin = authUsers.includes(context.caller);
+    const isAdmin = authUsers.includes(context.caller);
     const bot_brain = {
         cooldown: 60 * 15, // 25 minutes = 
         cost: 40500,      // 58K500GC
     }
     const to_hhmmss = (time: number) => {
         time = time / 1000;
-        let days = Math.floor(time / 86400);
+        const days = Math.floor(time / 86400);
         time -= days * 86400;
-        let hours = Math.floor(time / 3600);
+        const hours = Math.floor(time / 3600);
         time -= hours * 3600;
-        let minutes = Math.floor(time / 60);
+        const minutes = Math.floor(time / 60);
         time -= minutes * 60;
-        let seconds = Math.floor(time);
-        if(days > 0) return `${days < 10 ? "0" + days : days}:${hours < 10 ? "0" + hours : hours}:${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
-        if(hours > 0) return `${hours < 10 ? "0" + hours : hours}:${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+        const seconds = Math.floor(time);
+        if (days > 0) return `${days < 10 ? "0" + days : days}:${hours < 10 ? "0" + hours : hours}:${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+        if (hours > 0) return `${hours < 10 ? "0" + hours : hours}:${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
         return `${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
     }
     const l = $fs.scripts.lib()
-    let { op, passthrough } = args as any
-    let { ikey } = passthrough
+    const { op, passthrough } = args as any
+    const { ikey } = passthrough
 
-    let query_db = (operand: string, command: unknown, query: unknown): unknown => {
+    const query_db = (operand: string, command: unknown, query: unknown): unknown => {
         return $fs.fatalcenturion.db({ operand, command, query }).q
     }
     const end = () => {
@@ -54,11 +54,11 @@ export default (context: Context, args: {
     }
 
     if (op === "tag" && isAdmin && passthrough.tags) {
-        let tags = (typeof passthrough.tags === "string") ? passthrough.tags.split(",").map((e) => e.trim()) : passthrough.tags
-        let mode = passthrough.regex ? 0 : 1;
+        const tags = (typeof passthrough.tags === "string") ? passthrough.tags.split(",").map((e) => e.trim()) : passthrough.tags
+        const mode = passthrough.regex ? 0 : 1;
 
         if (mode === 0) {
-            let count = query_db("c", {}, { ikey: { $regex: passthrough.regex } });
+            const count = query_db("c", {}, { ikey: { $regex: passthrough.regex } });
             query_db("u", {
                 $set: {
                     tags,
@@ -67,7 +67,7 @@ export default (context: Context, args: {
             }, { ikey: { $regex: passthrough.regex } })
             l.log(`${count} scripts tagged, thank you`)
         } else if (mode === 1) {
-            let manifest = query_db("f", {}, { ikey })[0]
+            const manifest = query_db("f", {}, { ikey })[0]
             l.log("Script tagged, thank you")
             if (!manifest) {
                 query_db("us", {
@@ -92,14 +92,14 @@ export default (context: Context, args: {
         }
     } else if (op === "report") {
         l.log("Reporting script: " + ikey.replace("#", "."))
-        let manifest = query_db("f", {}, { ikey })[0]
+        const manifest = query_db("f", {}, { ikey })[0]
 
         if (ikey.split("#")[0] === context.caller) {
             l.log(`\`DYou can't report your own script\``)
             return end()
         }
 
-        let report = { victim: context.caller, z: new Date().getTime() }
+        const report = { victim: context.caller, z: new Date().getTime() }
         if (!manifest) {
             query_db("us", {
                 $set: {
@@ -121,8 +121,8 @@ export default (context: Context, args: {
             // // Filter out reports from more than 24 hours ago
             manifest.reports = manifest.reports.filter((e) => e.z > new Date().getTime() - (4_3200_000 * 2))
 
-            let prevReport = manifest.reports.find((e) => e.victim === context.caller);
-            let canReport = !prevReport;
+            const prevReport = manifest.reports.find((e) => e.victim === context.caller);
+            const canReport = !prevReport;
             // Check if the user has already reported this script in the last 24 hours
             if (!canReport) {
                 l.log(`\`DYou have already reported this script in the last 24 hours\``)
@@ -136,7 +136,7 @@ export default (context: Context, args: {
                 }
             }, { ikey })
         }
-        let stats = query_db("f", {}, { __metrics: true })[0]
+        const stats = query_db("f", {}, { __metrics: true })[0]
         query_db("u1", {
             $set: {
                 reports: stats.reports + 1,
@@ -145,7 +145,7 @@ export default (context: Context, args: {
 
         l.log("Report sent, thank you")
     } else if (op === "search") {
-        let stats = query_db("f", {}, { __metrics: true })[0]
+        const stats = query_db("f", {}, { __metrics: true })[0]
         query_db("u1", {
             $set: {
                 searches: stats.searches + 1,
@@ -154,9 +154,9 @@ export default (context: Context, args: {
             }
         }, { __metrics: true })
     } else if (op === "donate") {
-        let amount = args.passthrough.amount;
-        let stats = query_db("f", {}, { __metrics: true })[0]
-        let donor = query_db("f", {}, { __donation: true, user: context.caller })[0];
+        const amount = args.passthrough.amount;
+        const stats = query_db("f", {}, { __metrics: true })[0]
+        const donor = query_db("f", {}, { __donation: true, user: context.caller })[0];
         query_db("us", {
             $set: {
                 __donation: true,
@@ -172,7 +172,7 @@ export default (context: Context, args: {
             }
         }, { __metrics: true })
     } else if (op === "metrics") {
-        let names = {
+        const names = {
             "searches": "Searches Resolved",
             "reports": "Reports Created",
             "scripts": "Scripts Stored",
@@ -187,41 +187,41 @@ export default (context: Context, args: {
         };
 
 
-        let metrics = query_db("f", {}, { __metrics: true })[0];
+        const metrics = query_db("f", {}, { __metrics: true })[0];
         delete metrics._id;
         delete metrics.__metrics;
-        let dono_stats = {
+        const dono_stats = {
             amt: 0,
             donos: 0,
         }
-        let last_scan = new Date(metrics.last_scan as number);
+        const last_scan = new Date(metrics.last_scan as number);
 
         // Add the cooldown to the previous scan
-        let next_scan = new Date(last_scan.getTime() + (bot_brain.cooldown) * 1000);
-        let difference = next_scan.getTime() - new Date().getTime()
-        let countdown = to_hhmmss(Math.abs(difference))
-        let stats = Object.entries(metrics).map(([k, v]) => {
+        const next_scan = new Date(last_scan.getTime() + (bot_brain.cooldown) * 1000);
+        const difference = next_scan.getTime() - new Date().getTime()
+        const countdown = to_hhmmss(Math.abs(difference))
+        const stats = Object.entries(metrics).map(([k, v]) => {
             if (!v) v = 0
             if (k === "donation_sum") dono_stats.amt = v as number
             if (k === "donations") dono_stats.donos = v as number
             if (k === "last_scan") return null
             if (k === "sectors_scanned") {
-                let v2 = v as number[]
-                let total = v2.reduce((a, b) => a + b, 0);
-                let average = Math.floor(total / (v2.length ?? 1))
-                let per_hour = average * (3600 / bot_brain.cooldown);
-                let per_day = per_hour * 24;
+                const v2 = v as number[]
+                const total = v2.reduce((a, b) => a + b, 0);
+                const average = Math.floor(total / (v2.length ?? 1))
+                const per_hour = average * (3600 / bot_brain.cooldown);
+                const per_day = per_hour * 24;
                 let queue_cycle = (metrics.sectors / per_hour)
                 let queue_string = queue_cycle.toFixed(2);
-                let [whole, decimal] = queue_string.split(".");
-                let queue_cycle_decimal = decimal ? decimal.length : 0;
+                const [whole, decimal] = queue_string.split(".");
+                const queue_cycle_decimal = decimal ? decimal.length : 0;
                 if (queue_cycle_decimal < 75) queue_string = `${whole}.75`;
                 if (queue_cycle_decimal < 50) queue_string = `${whole}.50`;
                 if (queue_cycle_decimal < 25) queue_string = `${whole}.25`;
 
                 queue_cycle = parseFloat(queue_string);
 
-                let text = `${average.toLocaleString()} per scan | ${(average * (3600 / bot_brain.cooldown)).toLocaleString()} per hour | Queue Cycle: ${to_hhmmss(queue_cycle* 3600 * 1000)} `
+                const text = `${average.toLocaleString()} per scan | ${(average * (3600 / bot_brain.cooldown)).toLocaleString()} per hour | Queue Cycle: ${to_hhmmss(queue_cycle * 3600 * 1000)} `
                 return {
                     name: names[k],
                     value: text,
@@ -245,8 +245,8 @@ export default (context: Context, args: {
             }
         }).filter(e => e !== null);
 
-        let longest = Math.max(...stats.map((e) => e.length))
-        let longestName = Math.max(...stats.map((e) => e.name.length))
+        const longest = Math.max(...stats.map((e) => e.length))
+        const longestName = Math.max(...stats.map((e) => e.name.length))
 
         l.log("Metrics for Findr")
         stats.map((e) => {
@@ -258,8 +258,8 @@ export default (context: Context, args: {
         l.log(`\`TTTL:       ${to_hhmmss(Math.floor(metrics.bot_gc / (bot_brain.cost)) * (bot_brain.cooldown * 1000))} \``)
         l.log(`\n\`YAverage Donation: ${l.to_gc_str(Math.floor(dono_stats.amt / dono_stats.donos))}\``)
     } else if (op === "open" && isAdmin) {
-        let url = args.passthrough.url
-        let manifest = query_db("f", {}, { ikey })[0]
+        const url = args.passthrough.url
+        const manifest = query_db("f", {}, { ikey })[0]
         if (!manifest) {
             query_db("us", {
                 $set: {
@@ -281,8 +281,8 @@ export default (context: Context, args: {
             }, { ikey })
         }
     } else if (op === "description" && isAdmin) {
-        let description = args.passthrough.description
-        let manifest = query_db("f", {}, { ikey })[0]
+        const description = args.passthrough.description
+        const manifest = query_db("f", {}, { ikey })[0]
         if (!manifest) {
             query_db("us", {
                 $set: {
@@ -304,8 +304,8 @@ export default (context: Context, args: {
             }, { ikey })
         }
     } else if (op === "usage" && isAdmin) {
-        let usage = args.passthrough.usage
-        let manifest = query_db("f", {}, { ikey })[0]
+        const usage = args.passthrough.usage
+        const manifest = query_db("f", {}, { ikey })[0]
         if (!manifest) {
             query_db("us", {
                 $set: {

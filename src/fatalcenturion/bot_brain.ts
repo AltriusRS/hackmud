@@ -4,12 +4,12 @@
  * CAUTION: EARLY ACCESS
  */
 export default (context: Context, args: {}) => {
-  let _START = Date.now();
+  const _START = Date.now();
   // get the queue
-  let queue = $db.f({ key: "bot_queue" }).first_and_close() as { _id: unknown, key: string, sectors: any[] };
+  const queue = $db.f({ key: "bot_queue" }).first_and_close() as { _id: unknown, key: string, sectors: any[] };
 
   // Fetch all sectors from the server and add the missing ones to the queue
-  let levels: [string, string[]][] = [];
+  const levels: [string, string[]][] = [];
 
   levels[0] = ["nullsec", $fs.scripts.nullsec()];
   levels[1] = ["lowsec", $fs.scripts.lowsec()];
@@ -17,7 +17,7 @@ export default (context: Context, args: {}) => {
   levels[3] = ["highsec", $fs.scripts.highsec()];
   levels[4] = ["fullsec", $fs.scripts.fullsec()];
   let sectors_added = 0;
-  let _metrics = $db.f({ __metrics: true }).first_and_close() as any;
+  const _metrics = $db.f({ __metrics: true }).first_and_close() as any;
 
   // for each level, add all the sectors to the queue if they are not already in there
   for (let i = 0; i < levels.length; i++) {
@@ -39,12 +39,12 @@ export default (context: Context, args: {}) => {
 
   for (let i = 0; i < queue.sectors.length; i++) {
     if (Date.now() - _START > 4200) break;
-    let s = queue.sectors.shift();
+    const s = queue.sectors.shift();
     s.last_triggered = new Date();
     queue.sectors.push(s);
     sectors_scanned++;
     let scripts = [];
-    let { sector, level } = s;
+    const { sector, level } = s;
     $ms.chats.join({ channel: sector });
     switch (level) {
       case "nullsec":
@@ -66,9 +66,9 @@ export default (context: Context, args: {}) => {
     $ms.chats.leave({ channel: sector });
 
     for (let j = 0; j < scripts.length; j++) {
-      let script = scripts[j];
+      const script = scripts[j];
 
-      let manifest = $db.f({ __script: true, ikey: script.replaceAll(".", "#") }).first_and_close();
+      const manifest = $db.f({ __script: true, ikey: script.replaceAll(".", "#") }).first_and_close();
       if (!manifest) scripts_added++;
       $db.us({ __script: true, ikey: script.replaceAll(".", "#") }, {
         $set: {
@@ -84,7 +84,7 @@ export default (context: Context, args: {}) => {
     }
   }
 
-  let total = $db.f({ __script: true }).count_and_close();
+  const total = $db.f({ __script: true }).count_and_close();
   _metrics.scripts = total;
 
   $db.u1({ key: "bot_queue" }, {
