@@ -294,7 +294,9 @@ export default (context: Context, args: {
     l.log(`\n\`6Want to support my work? Feeling generous?\`\n\`6Use find.donate {donate:<amount>} to thank me!\``)
 
     // TODO dynamic donator list
-    let donations = query_db("f", {}, { __donation: true }, 5, { amount: -1 }) as any[];
+    let donations = query_db("f", {}, { __donation: true, }, 10, { amount: -1 }) as any[];
+    donations = donations.filter((d) => d.user !== "anonymous");
+    donations.length = 10;
     if (donations) {
       l.log(`\n\`6Thank you to the following donors:\``)
       let donor_list = donations.map((d) => d.user)
