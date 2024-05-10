@@ -49,8 +49,8 @@ export default (context: Context, args: {
       + "\n`n+#+            +#+     +#+  +#+#+# +#+    +#+ +#+    +#+ `"
       + "\n`p#+#            #+#     #+#   #+#+# #+#    #+# #+#    #+# `"
       + "\n`3###        ########### ###    #### #########  ###    ### `"
-      + "\n`NWritten by Altrius``8     EARLY    ACCESS     ``YVersion 0.2.1 `"
-      + "\n`8                       ‾‾‾‾‾‾‾‾    ‾‾‾‾‾‾‾‾‾‾‾`");
+      + "\n`NWritten by Altrius`                         `YVersion 1.0.0 `" +
+      + "\n");
 
     let is_valid = true
 
