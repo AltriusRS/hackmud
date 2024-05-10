@@ -7,8 +7,9 @@
 type Scriptor = { name: string, call: (args: any) => unknown }
 export default (context: Context, args: { t: Scriptor, confirm?: boolean }) => {
   const l = $fs.scripts.lib();
+
   const end = () => {
-    return l.get_log().join("\n").replaceAll('"', '');
+    return l.get_log().map((s) => s.replaceAll(/^"|"$/g, '')).join("\n");
   }
 
   //let outcome = args.t.call();
@@ -24,7 +25,6 @@ export default (context: Context, args: { t: Scriptor, confirm?: boolean }) => {
 
   }
 
-
   if (require_confirm && !args.confirm) {
     l.log("`4[WARN]` - Passed scriptor does not match any known npc corps")
     l.log("`4[WARN]` - Cannot proceed with scan without confirmation")
@@ -32,12 +32,29 @@ export default (context: Context, args: { t: Scriptor, confirm?: boolean }) => {
     return { ok: false, msg: end() }
   }
 
-  l.log("`N[INFO]` - Scriptor is known npc corp....")
-  let output = args.t.call({});
+  l.log("`3[ OK ]` - Scriptor is known npc corp....")
+  let listicleRegex = /([a-z0-9]+\:(?:"?)[a-z0-9]+(?:"?))/;
+  let output = args.t.call({}) as string;
+  let listicles = listicleRegex.exec(output);
+  let retries = 0;
 
-  $D(output);
+  while (!listicles && retries < 4) {
+    listicles = listicleRegex.exec(output);
+    if (!listicles) {
+      l.log("`4[WARN]` - Scriptor returned unparsable output " + (retries + 1) + " times sequentially")
+      retries += 1;
+    }
+    if (retries === 4) {
+      l.log("`D[ERR ]` - Cannot proceed, script output did not provide a result five times in a row");
+      l.log("`D[ERR ]` - The script may be corrupted in a way which makes ")
+      return { ok: false, msg: end() }
+    }
+  }
+  let [argument, page] = listicles[0].split(":");
 
 
+  l.log(`\`Y[DEBG]\` - page argument: \`N${argument}\``);
+  l.log(`\`Y[DEBG]\` - project list: \`3${page}\``);
   return {
     ok: true, msg: end()
   };
