@@ -1,6 +1,6 @@
 import { SetAccessorDeclaration } from "typescript"
 import { IKey } from "./str"
-import { db } from "."
+import { query } from "./db"
 
 /**
  * @type {Scriptor}
@@ -227,7 +227,7 @@ export class Script {
 
     flush(): void {
         let stored = this.toDB();
-        db.query("us", { $set: stored }, { __script: true, ikey: this.ikey.toString() });
+        query("us", { $set: stored }, { __script: true, ikey: this.ikey.toString() });
 
     }
 }
