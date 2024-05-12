@@ -4,40 +4,23 @@
  * @caution EARLY ACCESS
  * @level FULLSEC
  */
-type Scriptor = { name: string, call: (args: any) => unknown }
+
+import { Loc } from "../lib/findr/locs";
+import { Scriptor } from "../lib/types";
+
 export default (context: Context, args: { t: Scriptor, confirm?: boolean, rank: string, class: string }) => {
   const l = $fs.scripts.lib();
 
 
 
-  const result = $fs.ast.t2_scraper({ t: args.t });
-  const locs = result;
+  const locs = $fs.ast.t2_scraper({ t: args.t });
 
   const locStrings = [];
 
   for (let i = 0; i < locs.length; i++) {
     const name = locs[i];
-    const [prefix, datablock, ...suffix] = name.split("_");
-    let loc_rank = 'Junkrack';
-    let loc_class = 'Architect';
-    const rank_str = datablock.substring(0, 2);
-    const class_str = datablock.substring(2, 5);
-    switch (rank_str) {
-      case 'jr': loc_rank = 'junkrack'; break;
-      case 'dd': loc_rank = 'diggerdeck'; break;
-      case 'wb': loc_rank = 'wreckbox'; break;
-      case 'pr': loc_rank = 'phreakrig'; break;
-      case 'ls': loc_rank = 'leetstack'; break;
-    }
+    const loc = Loc.fromString(name);
 
-
-    switch (class_str) {
-      case 'wvr': loc_class = 'architect'; break;
-      case 'ttl': loc_class = 'lock'; break;
-      case 'wlf': loc_class = 'infiltrator'; break;
-      case 'rvn': loc_class = 'scavenger'; break;
-      case 'stg': loc_class = 'executive'; break;
-    }
 
     let valid = true;
     if (args.rank) valid = valid && loc_rank === args.rank;

@@ -1,6 +1,5 @@
-import { SetAccessorDeclaration } from "typescript"
-import { IKey } from "./str"
-import { query } from "./db"
+import { Script } from "./findr/script"
+import { SecurityLevel } from "./findr/securityLevel"
 
 /**
  * @type {Scriptor}
@@ -118,6 +117,22 @@ export type StoredScript = {
 }
 
 /**
+ * @type {StoredSector}
+ * @description A type representing a sector in the database
+ * @property {string} name - The name of the sector
+ * @property {number} last_indexed - The last time the sector was indexed
+ * @property {string} indexed_by - The user who indexed the sector
+ * @property {boolean} __sector - Filter property for mongodb
+ */
+export type StoredSector = {
+    name: string,
+    last_indexed: number,
+    indexed_by: string
+    __sector: true
+}
+
+
+/**
  * @type {Sector}
  * @description A type representing a sector
  * @property {string} sector - The sector of the sector
@@ -138,161 +153,6 @@ export type SectorList = string[];
  * @type {ScriptList} - A type representing a list of script names
  */
 export type ScriptList = string[];
-
-/**
- * @type {Script}
- * @description A class representing a script
- * @property {IKey} ikey - The IKey of the script
- * @property {string} name - The name of the script
- * @property {string} author - The author of the script
- * @property {string} sector - The sector of the script
- * @property {SecurityLevel} level - The security level of the script
- * @property {string[]} tags - The tags of the script
- * @property {string[]} reports - The reports of the script
- * @property {string | null} usage - The usage of the script
- * @property {string | null} open - The open of the script
- * @property {string | null} description - The description of the script
- * @property {number} z - The z value of the script
- * @property {number} a - The a value of the script
- * @property {boolean} is_stale - Whether the script is stale or not
- */
-export class Script {
-    public ikey: IKey;
-    public name: string;
-    public author: string;
-    public sector: string;
-    public level: SecurityLevel;
-    public tags: string[];
-    public reports: string[];
-    public usage: string | null;
-    public open: string | null;
-    public description: string | null;
-    public z: number;
-    public a: number;
-    public is_stale: boolean;
-
-    /**
-     * @description Creates a new instance of Script
-     * @param {StoredScript} db - The StoredScript object to create the Script from
-     */
-    constructor(db: StoredScript) {
-        this.ikey = IKey.fromIkey(db.ikey);
-        this.author = this.ikey.author;
-        this.name = this.ikey.name;
-        this.sector = db.sector ?? "UNK_NOWN";
-        this.level = SecurityLevel.fromDisplay(db.level ?? "");
-        this.tags = db.tags ?? [];
-        this.reports = db.reports ?? [];
-        this.usage = db.usage ?? null;
-        this.open = db.open ?? null;
-        this.description = db.description ?? null;
-        this.z = db.z ?? new Date().getTime();
-        this.a = db.a ?? new Date().getTime();
-        this.is_stale = new Date().getTime() - this.z > 24 * 60 * 60 * 1000;// Mark as stale if the script is older than 24 hours
-    }
-
-    /**
-     * @description Creates a new instance of Script from a StoredScript object
-     * @param {StoredScript} db - The StoredScript object to create the Script from
-     * @returns {Script} - The new instance of Script
-     */
-    static fromDB(db: StoredScript): Script {
-        return new Script(db);
-    }
-
-    /**
-     * @description Returns the stored script as a StoredScript object
-     * @returns {StoredScript} - The stored script as a StoredScript object
-     */
-    toDB(): StoredScript {
-        return {
-            ikey: this.ikey.toString(),
-            author: this.author,
-            sector: this.sector,
-            level: this.level.display,
-            tags: this.tags,
-            reports: this.reports,
-            usage: this.usage,
-            open: this.open,
-            description: this.description,
-            z: this.z,
-            a: this.a
-        }
-    }
-
-    report(report: string): void {
-        this.reports.push(report);
-
-    }
-
-    flush(): void {
-        let stored = this.toDB();
-        query("us", { $set: stored }, { __script: true, ikey: this.ikey.toString() });
-
-    }
-}
-
-/**
- * @type {SecurityLevel}
- * @description A class representing a security level
- * @property {string} display - The display name of the security level
- * @property {number} value - The value of the security level
- */
-export class SecurityLevel {
-    public display: string;
-    public value: number;
-
-    /**
-     * @description Creates a new instance of SecurityLevel
-     * @param {string} display - The display name of the security level
-     * @param {number} value - The value of the security level
-     */
-    constructor(display: string, value: number) {
-        this.display = display;
-        this.value = value;
-    }
-
-    /**
-     * @description Creates a new instance of SecurityLevel from a display name
-     * @param {string} display - The display name of the security level
-     * @returns {SecurityLevel} - The new instance of SecurityLevel
-     */
-    static fromDisplay(display: string): SecurityLevel {
-        let display_upper = display.toUpperCase();
-        let match = SecurityLevels[display_upper];
-        if (match) return match;
-        else return new SecurityLevel("UNKNOWN", -1);
-    }
-
-    /**
-     * @description Creates a new instance of SecurityLevel from a value
-     * @param {number} value - The value of the security level
-     * @returns {SecurityLevel} - The new instance of SecurityLevel
-     */
-    static fromValue(value: number): SecurityLevel {
-        let match = securityLevels.find((s) => s.value === value);
-        if (match) return match;
-        else return new SecurityLevel("UNKNOWN", -1);
-    }
-
-
-    /**
-     * @description Returns the display name of the security level
-     * @returns {string} - The display name of the security level
-     */
-    toDisplay(): string {
-        let color = "";
-        switch (this.value) {
-            case 0: color = "T"; break;
-            case 1: color = "D"; break;
-            case 2: color = "5"; break;
-            case 3: color = "3"; break;
-            case 4: color = "2"; break;
-            default: color = "Y"; break;
-        }
-        return `\`${color}${this.display}\``;
-    }
-}
 
 /**
  * @type {SecurityLevels}
@@ -336,6 +196,7 @@ export const securityLevels = [
  * @property {number} donations - The number of donations made by the script index
  * @property {number} donation_sum - The sum of all donations made by the script index
  * @property {BrainMetrics[]} active_brains - The reports of the active bot brains
+ * @property {boolean} bool value to allow for quick querying of the metrics
  */
 export type IndexMetrics = {
     searches: number,
@@ -347,7 +208,8 @@ export type IndexMetrics = {
     balance: number,
     donations: number,
     donation_sum: number,
-    active_brains: BrainMetrics[],
+    brains: BrainMetrics[],
+    readonly __new_metrics: boolean,
 }
 
 /**

@@ -4,3 +4,6 @@ export * as str from "./str";
 export * as time from "./time";
 export * as types from "./types";
 export * as quabble from "./arguments";
+export * as locs from "./findr/locs";
+export * as script from "./findr/script";
+export * as securityLevel from "./findr/securityLevel";

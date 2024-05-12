@@ -1,3 +1,5 @@
+import { IndexMetrics } from "../lib/types";
+
 /**
  * @author altrius
  * @description A utility script designed to locate things for people
@@ -17,7 +19,8 @@ export default (context: Context, args: {}) => {
   levels[3] = ["highsec", $fs.scripts.highsec()];
   levels[4] = ["fullsec", $fs.scripts.fullsec()];
   let sectors_added = 0;
-  const _metrics = $db.f({ __metrics: true }).first_and_close() as any;
+  const _metrics = $db.f({ __metrics: true }).first_and_close() as IndexMetrics;
+
 
   // for each level, add all the sectors to the queue if they are not already in there
   for (let i = 0; i < levels.length; i++) {

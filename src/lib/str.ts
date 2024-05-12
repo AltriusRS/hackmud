@@ -1,6 +1,6 @@
-export function pad(str: string, length: number, alignment: number = 0): string {
+export function pad(str: string, length: number, char: string = "", alignment: number = 0): string {
     let pad = "";
-    for (let i = 0; i < length - str.length; i++) alignment === 0 ? pad += " " : pad = " " + pad;
+    for (let i = 0; i < length - str.length; i++) alignment === 0 ? pad += char : pad = char + pad;
     return pad + str;
 }
 
